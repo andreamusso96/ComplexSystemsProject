@@ -1,0 +1,5 @@
+# Add here all file patterns that should not be added to git
+
+# IntelliJ
+*.iml
+.idea
