@@ -1,5 +1,9 @@
 # Add here all file patterns that should not be added to git
 
+# Python
+*.pyc
+__pychache__/
+
 # IntelliJ
 *.iml
 .idea
