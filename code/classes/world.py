@@ -2,8 +2,8 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
-from code.classes.agent import Agent
-from code.classes.news import News
+from .agent import Agent
+from .news import News
 
 
 class World:
@@ -51,7 +51,7 @@ class World:
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
         for node in initial_sharing:
-            self.graph.nodes[node]['agent'].update()
+            node.update()
 
     def _create_agents(self):
         """ Creates the agents with random share_threshold and truth_weight values """
@@ -65,64 +65,59 @@ class World:
 
         return agents
 
-    def _create_graph(self, m=5):
+    def _create_graph(self):
         """ Create directed graph with agents assigned to the nodes and trust values assigned to the edges """
-        graph = nx.barabasi_albert_graph(len(self.agents), m)
-        graph = graph.to_directed()
+        small_graph = nx.powerlaw_cluster_graph(len(self.agents), 3, 0.5)
+        small_graph = small_graph.to_directed()
 
-        # add agents to nodes
-        for i, node in enumerate(graph.nodes()):
-            graph.nodes[node]['agent'] = self.agents[i]
+        graph = nx.DiGraph()
+        graph.add_nodes_from(self.agents)
 
-        # add weights to edges
-        for edge in graph.edges():
-            graph.edges[edge]['weight'] = np.random.random()
+        for (a, b) in small_graph.edges():
+            graph.add_edge(self.agents[a], self.agents[b], weight=np.random.random())
 
         # TODO: Normalize over in-going edges
 
         return graph
 
-    def update(self, timesteps=1):
+    def update(self, time_steps=1):
         """
         Simulates the given number of timesteps.
 
-        :param timesteps: int
+        :param time_steps: int
             Number of timesteps that are simulated
         """
-        for i in range(timesteps):
+        for i in range(time_steps):
             sharing_agents = []
             for node in self.graph.nodes():
-                # Get agent of node
-                agent = self.graph.nodes[node]['agent']
-
                 # Go through in-going edges to get providers and trust values
                 providers = []
                 trust_in_providers = []
                 for edge in self.graph.in_edges(node):
                     nbr_node, self_node = edge
-                    providers.append(self.graph.nodes[nbr_node]['agent'])
+                    providers.append(nbr_node)
                     trust_in_providers.append(self.graph.edges[edge]['weight'])
 
                 # Check if agent shares the news
-                if agent.is_sharing(self.news, providers, np.array(trust_in_providers)):
+                if node.is_sharing(self.news, providers, np.array(trust_in_providers)):
                     sharing_agents.append(node)
 
             # Update agents that share the news
             for node in sharing_agents:
-                self.graph.nodes[node]['agent'].update()
+                node.update()
             # Update new (increase time)
             self.news.update()
 
     def draw(self, sharing_color='red'):
         color_map = []
         for node in self.graph.nodes():
-            if self.graph.nodes[node]['agent'].has_shared:
+            if node.has_shared:
                 color_map.append(sharing_color)
             else:
                 color_map.append('blue')
 
         plt.figure()
-        nx.draw_spectral(self.graph, node_color=color_map)
+        nx.draw(self.graph, node_color=color_map)
 
     def get_number_sharing_agents(self):
         """ Returns the number of agents that are currently sharing the news """
