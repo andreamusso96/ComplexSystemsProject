@@ -1,5 +1,6 @@
 """ Agent class """
 import numpy as np
+from news import News
 
 
 class Agent:
@@ -9,12 +10,8 @@ class Agent:
     Attributes:
         share_threshold: float between 0 and 1
             how much excitement about a news an agent needs before he shares it.
-        truth_likelihood: float between 0 and 1
-            how much the agent believes in the news. If the value is 0 the agent is sure the news is false.
         truth_weight: float between 0 and 1
             how important it is for the agent that the news have a high truth likelihood.
-        trust_in_providers: numpy.ndarray (normalized)
-            represents the trust in the information providers of the agent.
         has_shared: bool
             if the agent has already shared the news
 
@@ -28,54 +25,56 @@ class Agent:
 
     """
 
-    def __init__(self, share_threshold, truth_likelihood, truth_weight, trust_in_providers):
+    def __init__(self, share_threshold, truth_weight):
         """
         Represents an agent in the network
 
         :param share_threshold: float in [0, 1]
             how much excitement about a news an agent needs before he shares it.
-        :param truth_likelihood: float in [0, 1]
-            how much the agent believes in the news.
         :param truth_weight: float in [0, 1]
             how important it is that the news have a high truth likelihood
-        :param trust_in_providers: numpy.ndarray (normalized)
-            represents the trust in the information providers
         """
         assert 0 <= share_threshold <= 1, 'Invalid value for share_threshold. Value should be between 0 and 1'
-        assert 0 <= truth_likelihood <= 1, 'Invalid value for truth_likelihood. Value should be between 0 and 1'
         assert 0 <= truth_weight <= 1, 'Invalid value for truth_weight. Value should be between 0 and 1'
-        assert np.isclose(1, np.sum(trust_in_providers)), 'Invalid value for trust_in_providers. Array should be normalized'
 
         self.share_threshold = share_threshold
-        self.truth_likelihood = truth_likelihood
         self.truth_weight = truth_weight
-        self.trust_in_providers = trust_in_providers
         self.has_shared = False
 
-    def compute_truth_likelihood(self):
+    def compute_truth_likelihood(self, providers, trust_in_providers):
         """
         Computes the truth likelihood of the news based on the trust in the information providers
- 
+        :param providers: list (list of Agents)
+            represents the information providers
+        :param trust_in_providers: numpy.ndarray (normalized)
+            represents the trust in the information providers
         :return: float
             Truth likelihood of the news
         """
 
-        self.truth_likelihood = np.sum(self.trust_in_providers) + (np.random.rand()-0.5)/100  # adding 1% random stochastic noise
-        return self.truth_likelihood
+        assert np.isclose(1, np.sum(trust_in_providers)), 'Invalid value for trust_in_providers. Array should be normalized'
+        
+        truth_likelihood = (np.random.rand()-0.5)/100  # adding 1% random stochastic noise
+        for provider in providers:
+            if provider.has_shared:
+                truth_likelihood += trust_in_providers[providers.index(provider)]  
+        
+        return truth_likelihood
 
-    def compute_excitement(self, news):
+    def compute_excitement(self, news, truth_likelihood):
         """
         Computes the excitement score of the news based on its truth likelihood and fitness
 
         :param news: News
             News that is shared in the network
+        :param truth_likelihood: float in [0, 1]
+            how much the agent believes in the news.
         :return: float
             Excitement score of the news
         """
         
-        return (self.truth_weight * self.compute_truth_likelihood() + (1-self.truth_weight) * news.fitness) * np.exp(-news.time)
-
-    def is_sharing(self, news):
+        return (self.truth_weight * truth_likelihood + (1 - self.truth_weight) * news.fitness) * np.exp(-news.time)
+    def is_sharing(self, news, providers, trust_in_providers):
         """
         If the agent will share the news.
 
@@ -85,11 +84,15 @@ class Agent:
 
         :param news: News
             News that is shared in the network
+        :param providers: list (list of Agents)
+            represents the information providers    
+        :param trust_in_providers: numpy.ndarray (normalized)
+            represents the trust in the information providers    
         :return: bool
             If the agent shares the news
         """
 
-        if not self.has_shared and self.compute_excitement(news) >= self.share_threshold:
+        if not self.has_shared and self.compute_excitement(news, compute_truth_likelihood(providers, trust_in_providers)) >= self.share_threshold:
             self.has_shared = True
             return True
         return False
@@ -97,7 +100,5 @@ class Agent:
     def __str__(self):
         return f'Agent: \n' \
                f'\tshare threshold: {self.share_threshold}\n' \
-               f'\ttruth likelihood {self.truth_likelihood}\n' \
                f'\ttruth weight {self.truth_weight}\n' \
-               f'\ttrust in information providers {self.trust_in_providers}\n' \
                f'\talready shared news: {self.has_shared}'
