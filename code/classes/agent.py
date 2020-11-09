@@ -1,6 +1,5 @@
 """ Agent class """
 import numpy as np
-from news import News
 
 
 class Agent:
@@ -16,13 +15,14 @@ class Agent:
             if the agent has already shared the news
 
     Methods:
-        compute_truth_likelihood()
+        compute_truth_likelihood(provider, trust_in_providers)
             computes the truth likelihood of the news
-        compute_excitement(news)
+        compute_excitement(news, truth_likelihood)
             computes the excitement score of the news
         is_sharing(news)
             returns True if the agent will share the news
-
+        update()
+            updates the state of the agent
     """
 
     def __init__(self, share_threshold, truth_weight):
@@ -44,6 +44,7 @@ class Agent:
     def compute_truth_likelihood(self, providers, trust_in_providers):
         """
         Computes the truth likelihood of the news based on the trust in the information providers
+
         :param providers: list (list of Agents)
             represents the information providers
         :param trust_in_providers: numpy.ndarray (normalized)
@@ -51,15 +52,10 @@ class Agent:
         :return: float
             Truth likelihood of the news
         """
-
         assert np.isclose(1, np.sum(trust_in_providers)), 'Invalid value for trust_in_providers. Array should be normalized'
-        
-        truth_likelihood = (np.random.rand()-0.5)/100  # adding 1% random stochastic noise
-        for provider in providers:
-            if provider.has_shared:
-                truth_likelihood += trust_in_providers[providers.index(provider)]  
-        
-        return truth_likelihood
+
+        sharing_providers = [idx for idx, provider in enumerate(providers) if provider.has_shared]
+        return np.sum(trust_in_providers[sharing_providers]) + (np.random.rand()-0.5)/100  # adding 1% random stochastic noise
 
     def compute_excitement(self, news, truth_likelihood):
         """
@@ -74,6 +70,7 @@ class Agent:
         """
         
         return (self.truth_weight * truth_likelihood + (1 - self.truth_weight) * news.fitness) * np.exp(-news.time)
+
     def is_sharing(self, news, providers, trust_in_providers):
         """
         If the agent will share the news.
@@ -85,17 +82,31 @@ class Agent:
         :param news: News
             News that is shared in the network
         :param providers: list (list of Agents)
-            represents the information providers    
+            represents the information providers
         :param trust_in_providers: numpy.ndarray (normalized)
-            represents the trust in the information providers    
+            represents the trust in the information providers
         :return: bool
             If the agent shares the news
         """
+        assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
 
-        if not self.has_shared and self.compute_excitement(news, compute_truth_likelihood(providers, trust_in_providers)) >= self.share_threshold:
-            self.has_shared = True
+        if self.has_shared:
+            return False
+
+        truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
+        excitement_score = self.compute_excitement(news, truth_likelihood)
+
+        if excitement_score >= self.share_threshold:
             return True
         return False
+
+    def update(self):
+        """
+        Update the state of the agent.
+
+        Sets the has_shared attribute to True.
+        """
+        self.has_shared = True
 
     def __str__(self):
         return f'Agent: \n' \
