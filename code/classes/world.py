@@ -76,7 +76,10 @@ class World:
         for (a, b) in small_graph.edges():
             graph.add_edge(self.agents[a], self.agents[b], weight=np.random.random())
 
-        # TODO: Normalize over in-going edges
+        for node in graph.nodes():
+            sum_ingoing = np.sum(attr['weight'] for a, b, attr in graph.in_edges(node, data=True))
+            for edge in graph.in_edges(node):
+                graph.edges[edge]['weight'] /= sum_ingoing
 
         return graph
 
