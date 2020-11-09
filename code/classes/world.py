@@ -18,6 +18,8 @@ class World:
         agents: list of Agents
         graph: nx.DiGraph
             Represents the interaction between the agents
+        graph_layout:
+            Graph layout which is used to make sure that successive graphs share the same layout
 
     Methods:
         update()
@@ -47,6 +49,7 @@ class World:
         self.news = News(news_fitness, news_truth)
         self.agents = self._create_agents()
         self.graph = self._create_graph()
+        self.graph_layout = None
 
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
@@ -112,6 +115,9 @@ class World:
             self.news.update()
 
     def draw(self, sharing_color='red'):
+        if self.graph_layout is None:
+            self.graph_layout = nx.spring_layout(self.graph)
+
         color_map = []
         for node in self.graph.nodes():
             if node.has_shared:
@@ -120,7 +126,7 @@ class World:
                 color_map.append('blue')
 
         plt.figure()
-        nx.draw(self.graph, node_color=color_map)
+        nx.draw_networkx(self.graph, pos=self.graph_layout, node_color=color_map, with_labels=False)
 
     def get_number_sharing_agents(self):
         """ Returns the number of agents that are currently sharing the news """
