@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.animation
 
 from .agent import Agent
 from .news import News
@@ -50,6 +51,8 @@ class World:
         self.agents = self._create_agents()
         self.graph = self._create_graph()
         self.graph_layout = None
+        self.fig = None
+        self.ax = None
 
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
@@ -114,7 +117,7 @@ class World:
             # Update new (increase time)
             self.news.update()
 
-    def draw(self, sharing_color='red'):
+    def draw(self, sharing_color='red', new_figure=True):
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
 
@@ -124,9 +127,34 @@ class World:
                 color_map.append(sharing_color)
             else:
                 color_map.append('blue')
-
-        plt.figure()
+        if new_figure:
+            plt.figure()
         nx.draw_networkx(self.graph, pos=self.graph_layout, node_color=color_map, with_labels=False)
+
+    def update_plot(self, n):
+        """Calls update function and then draws the graph at frame n as part of the animation."""
+        if n > 0:
+            self.update()
+
+        self.ax.clear()
+        self.draw(new_figure=False)
+        self.ax.set_title('Frame ' + str(n))
+
+    def animate(self, frames=10, interval=100, path='animation.mp4'):
+        """Runs the animation."""
+        if self.fig is None:
+            self.fig = plt.figure(figsize=(17, 9), dpi=300)
+        if self.ax is None:
+            self.ax = self.fig.add_subplot(1, 1, 1)
+
+        if self.graph_layout is None:
+            self.graph_layout = nx.spring_layout(self.graph)
+
+        text = "Agents: " + str(self.num_agents) + " news fitness: " + str(self.news.fitness) + " news truth: " + str(self.news.truth_value)
+        plt.gcf().text(0.4, 0.07, text , fontsize=14)
+
+        animation = matplotlib.animation.FuncAnimation(self.fig, self.update_plot, frames=frames, interval=interval, repeat=False)
+        animation.save(path + str('.mp4'), writer='ffmpeg')
 
     def get_number_sharing_agents(self):
         """ Returns the number of agents that are currently sharing the news """
