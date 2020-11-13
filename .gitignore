@@ -7,3 +7,6 @@ __pychache__/
 # IntelliJ
 *.iml
 .idea
+
+# Apple files
+.DS_Store
