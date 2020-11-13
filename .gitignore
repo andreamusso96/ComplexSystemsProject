@@ -10,3 +10,10 @@ __pychache__/
 
 # Apple files
 .DS_Store
+
+
+# animation files
+# If we save the animation it will change every time we re-run the animationdemo.py program
+*.mp4
+
+# If there are some animation we would like to add to the repository we can white-list them here

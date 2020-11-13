@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation
+from matplotlib.animation import FuncAnimation
 
 from .agent import Agent
 from .news import News
@@ -131,7 +131,7 @@ class World:
             plt.figure()
         nx.draw_networkx(self.graph, pos=self.graph_layout, node_color=color_map, with_labels=False)
 
-    def update_plot(self, n):
+    def _next_frame(self, n):
         """Calls update function and then draws the graph at frame n as part of the animation."""
         if n > 0:
             self.update()
@@ -147,13 +147,10 @@ class World:
         if self.ax is None:
             self.ax = self.fig.add_subplot(1, 1, 1)
 
-        if self.graph_layout is None:
-            self.graph_layout = nx.spring_layout(self.graph)
-
         text = "Agents: " + str(self.num_agents) + " news fitness: " + str(self.news.fitness) + " news truth: " + str(self.news.truth_value)
-        plt.gcf().text(0.4, 0.07, text , fontsize=14)
+        plt.gcf().text(0.4, 0.07, text, fontsize=14)
 
-        animation = matplotlib.animation.FuncAnimation(self.fig, self.update_plot, frames=frames, interval=interval, repeat=False)
+        animation = FuncAnimation(self.fig, self._next_frame, frames=frames, interval=interval, repeat=False)
         animation.save(path + str('.mp4'), writer='ffmpeg')
 
     def get_number_sharing_agents(self):
