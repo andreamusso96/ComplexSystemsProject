@@ -29,7 +29,7 @@ class World:
             Return the number of agents that currently share the news
 
     """
-    def __init__(self, num_agents=50, num_sharing=1, news_fitness=0.5, news_truth=1):
+    def __init__(self, num_agents=50, num_sharing=1, news_fitness=0.5, news_truth=1, agents=None):
         """
         Represents the world in which the agents live and interact.
 
@@ -48,7 +48,7 @@ class World:
 
         self.num_agents = num_agents
         self.news = News(news_fitness, news_truth)
-        self.agents = self._create_agents()
+        self.agents = agents if agents is not None else self._create_agents()
         self.graph = self._create_graph()
         self.graph_layout = None
         self.fig = None

@@ -11,6 +11,8 @@ __pychache__/
 # Apple files
 .DS_Store
 
+# Jupyter notebook checkpoints
+*.ipynb_checkpoints
 
 # animation files
 # If we save the animation it will change every time we re-run the animationdemo.py program
