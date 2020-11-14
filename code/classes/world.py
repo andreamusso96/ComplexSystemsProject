@@ -5,6 +5,7 @@ from matplotlib.animation import FuncAnimation
 
 from .agent import Agent
 from .news import News
+from .graphplot import *
 
 
 class World:
@@ -116,20 +117,19 @@ class World:
                 node.update()
             # Update new (increase time)
             self.news.update()
-
-    def draw(self, sharing_color='red', new_figure=True):
+    
+    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0), 
+            node_size_function=lambda a: 200, 
+            edge_color_function=lambda x,y: (0,0,0), 
+            new_figure=True):
+            
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
-
-        color_map = []
-        for node in self.graph.nodes():
-            if node.has_shared:
-                color_map.append(sharing_color)
-            else:
-                color_map.append('blue')
         if new_figure:
             plt.figure()
-        nx.draw_networkx(self.graph, pos=self.graph_layout, node_color=color_map, with_labels=False)
+    
+        plot(self.graph, pos=self.graph_layout, clr=node_color_function, size=node_size_function, edge_clr=edge_color_function, ax=self.ax);
+        
 
     def _next_frame(self, n):
         """Calls update function and then draws the graph at frame n as part of the animation."""
@@ -140,7 +140,7 @@ class World:
         self.draw(new_figure=False)
         self.ax.set_title('Frame ' + str(n))
 
-    def animate(self, frames=10, interval=100, path='animation.mp4'):
+    def animate(self, frames=10, interval=100, path='animation'):
         """Runs the animation."""
         if self.fig is None:
             self.fig = plt.figure(figsize=(17, 9), dpi=300)
