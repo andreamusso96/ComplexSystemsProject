@@ -30,7 +30,7 @@ class World:
             Return the number of agents that currently share the news
 
     """
-    def __init__(self, num_agents=50, num_sharing=1, news_fitness=0.5, news_truth=1):
+    def __init__(self, num_agents=50, num_sharing=1, news_fitness=0.5, news_truth=1, agents=None, graph=None):
         """
         Represents the world in which the agents live and interact.
 
@@ -49,8 +49,10 @@ class World:
 
         self.num_agents = num_agents
         self.news = News(news_fitness, news_truth)
-        self.agents = self._create_agents()
-        self.graph = self._create_graph()
+        self.agents = agents if agents is not None else self._create_agents()
+        self.graph = graph if graph is not None else self._create_graph()
+
+        # Attributes for rendering
         self.graph_layout = None
         self.fig = None
         self.ax = None
@@ -80,9 +82,11 @@ class World:
         graph = nx.DiGraph()
         graph.add_nodes_from(self.agents)
 
+        # Same weight for all edges
         for (a, b) in small_graph.edges():
-            graph.add_edge(self.agents[a], self.agents[b], weight=np.random.random())
+            graph.add_edge(self.agents[a], self.agents[b], weight=1.0)
 
+        # Normalize over in-going edges
         for node in graph.nodes():
             sum_ingoing = np.sum(attr['weight'] for a, b, attr in graph.in_edges(node, data=True))
             for edge in graph.in_edges(node):
@@ -118,18 +122,20 @@ class World:
             # Update new (increase time)
             self.news.update()
     
-    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0), 
-            node_size_function=lambda a: 200, 
-            edge_color_function=lambda x,y: (0,0,0), 
-            new_figure=True):
+    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0),
+             node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0), new_figure=True):
             
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
         if new_figure:
             plt.figure()
     
-        plot(self.graph, pos=self.graph_layout, clr=node_color_function, size=node_size_function, edge_clr=edge_color_function, ax=self.ax);
-        
+        plot(self.graph,
+             pos=self.graph_layout,
+             clr=node_color_function,
+             size=node_size_function,
+             edge_clr=edge_color_function,
+             ax=self.ax)
 
     def _next_frame(self, n):
         """Calls update function and then draws the graph at frame n as part of the animation."""
