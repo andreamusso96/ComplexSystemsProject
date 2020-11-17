@@ -102,11 +102,11 @@ class World:
             Number of timesteps that are simulated
         """
         for i in range(time_steps):
-
+            activating_nodes = []
             # Go through all the nodes
             for node in self.graph.nodes():
 
-                # Update the status of each node in order (not the order here may matter!)
+                # Update the status of each node in order
 
                 # Go through in-going edges to get providers and trust values
                 providers = []
@@ -116,9 +116,15 @@ class World:
                     providers.append(nbr_node)
                     trust_in_providers[nbr_node.name] = self.graph.edges[edge]['weight']
 
-                # Update the node
-                node.update(self.news, providers, trust_in_providers)
+                # Check if the node activates
+                if node.activates(self.news, providers, trust_in_providers):
+                    activating_nodes.append(node)
 
+            # Activate all nodes which should be active this round
+            for node in activating_nodes:
+                node.is_active = True
+
+            # Update the time in the news
             self.news.update()
 
     def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0),

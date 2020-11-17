@@ -79,6 +79,33 @@ class Agent:
             -0.01 * news.time)
         return excitement_score
 
+    def activates(self, news, providers, trust_in_providers):
+        """
+        Updates the state of the agent. Namely, it computes if the agent should activate or not
+        :param news: News
+            News that is shared in the network
+        :param providers: list (list of Agents)
+            represents the information provider
+        :param trust_in_providers: dictionary (normalized) key = name of provider, value = trust in provider (float in [0,1])
+            represents the trust in the information providers
+        :return: boolean
+            True if agent activates in this round and false otherwise (is already active or does not activate)
+                """
+        assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
+
+        if self.is_active:
+            return False
+
+        else:
+            # check if he should activate
+            truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
+            excitement_score = self.compute_excitement(news, truth_likelihood)
+
+            if excitement_score >= self.share_threshold:
+                return True
+            else:
+                return False
+
     def update(self, news, providers, trust_in_providers):
         """
         Updates the state of the agent. Namely, it computes if the agent should activate or not
@@ -91,18 +118,10 @@ class Agent:
             represents the trust in the information providers
         """
 
-        assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
-
-        if self.is_active:
-            pass  # do nothing
-
+        if self.activates(news, providers, trust_in_providers):
+            self.is_active = True
         else:
-            # check if he should activate
-            truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
-            excitement_score = self.compute_excitement(news, truth_likelihood)
-
-            if excitement_score >= self.share_threshold:
-                self.is_active = True
+            pass  # do nothing
 
     def __str__(self):
         return f'Agent: \n' \
