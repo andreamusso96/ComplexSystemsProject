@@ -1,12 +1,12 @@
 from classes.world import *
 
-num_agents = 100
+num_agents = 50
 num_sharing = 1
 news_fitness = 0.5
 news_truth = 1
 
 frames = 10
-interval = 1000
+interval = 100
 
 path = 'animation'
 

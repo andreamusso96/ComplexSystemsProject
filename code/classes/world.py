@@ -1,8 +1,6 @@
 import networkx as nx
 import numpy as np
 
-import matplotlib
-matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
@@ -61,10 +59,16 @@ class World:
         self.fig = None
         self.ax = None
 
+        # Attributes for the simulation
+        self.next_nodes = []
+
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
         for node in initial_sharing:
             node.activate()
+            # Add out-going nodes to next_nodes
+            for (self_node, nbr_node) in self.graph.edges(node):
+                self.next_nodes.append(nbr_node)
 
     def _create_agents(self):
         """ Creates the agents with random share_threshold and truth_weight values """
@@ -92,9 +96,9 @@ class World:
 
         # Set weights on edges
         for node in graph.nodes():
-            # Set out-degree as weight of all out-going edges
+            # Set out-degree as weight on out-going edges
             out_degree = graph.out_degree[node]
-            for edge in graph.out_edges():
+            for edge in graph.edges(node):
                 graph.edges[edge]['weight'] = out_degree
 
         # Normalize over in-going edges
@@ -115,7 +119,7 @@ class World:
         for i in range(time_steps):
             activating_nodes = []
             # Go through all the nodes
-            for node in self.graph.nodes():
+            for node in self.next_nodes:
                 # Go through in-going edges to get providers and trust values
                 providers = []
                 trust_in_providers = {}
@@ -128,9 +132,15 @@ class World:
                 if node.activates(self.news, providers, trust_in_providers):
                     activating_nodes.append(node)
 
+            # Empty next_nodes
+            self.next_nodes = []
+
             # Activate all nodes which active this round
             for node in activating_nodes:
                 node.activate()
+                # Add out-going nodes to next_nodes
+                for (self_node, nbr_node) in self.graph.edges(node):
+                    self.next_nodes.append(nbr_node)
 
             # Update the time in the news
             self.news.update()
@@ -157,7 +167,7 @@ class World:
         self.ax.set_title('Frame ' + str(n))
 
     def animate(self, frames=10, interval=1000, path='animation'):
-        """Runs the animation."""
+        """ Runs the animation. """
         if self.fig is None:
             self.fig = plt.figure(figsize=(17, 9), dpi=300)
         if self.ax is None:

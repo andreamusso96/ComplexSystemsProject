@@ -13,6 +13,8 @@ class Agent:
             how important it is for the agent that the news have a high truth likelihood.
         is_active: bool
             if the agent is active (has shared the news)
+        activatable: bool
+            if the agent can be activated (if is_active can be set to True)
 
     Methods:
         compute_truth_likelihood(provider, trust_in_providers)
@@ -102,16 +104,12 @@ class Agent:
         excitement_score = self.compute_excitement(news, truth_likelihood)
 
         if excitement_score >= self.share_threshold:
-            # If some provider is active, return true. This is to model the fact that a node can activate
-            # Only if one of his providers is already active
-            for provider in providers:
-                if provider.is_active:
-                    return True
+            return True
         return False
 
     def activate(self):
         """
-        Activates the agent
+        Activates the agent if it can be activated
         """
         self.is_active = True
 
