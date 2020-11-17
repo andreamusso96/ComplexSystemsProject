@@ -12,7 +12,9 @@ class Agent:
         truth_weight: float between 0 and 1
             how important it is for the agent that the news have a high truth likelihood.
         is_active: bool
-            if the agent has already shared the news
+            if the agent is active (has shared the news)
+        activatable: bool
+            if the agent can be activated (if is_active can be set to True)
 
     Methods:
         compute_truth_likelihood(provider, trust_in_providers)
@@ -81,7 +83,8 @@ class Agent:
 
     def activates(self, news, providers, trust_in_providers):
         """
-        Updates the state of the agent. Namely, it computes if the agent should activate or not
+        Computes if the agent should activate or not.
+
         :param news: News
             News that is shared in the network
         :param providers: list (list of Agents)
@@ -90,45 +93,28 @@ class Agent:
             represents the trust in the information providers
         :return: boolean
             True if agent activates in this round and false otherwise (is already active or does not activate)
-                """
+        """
         assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
 
         if self.is_active:
             return False
 
-        else:
-            # check if he should activate
-            truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
-            excitement_score = self.compute_excitement(news, truth_likelihood)
+        # check if agent should activate
+        truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
+        excitement_score = self.compute_excitement(news, truth_likelihood)
 
-            if excitement_score >= self.share_threshold:
-                # If some provider is active, return true. This is to model the fact that a node can activate
-                # Only if one of his providers is already active
-                for provider in providers:
-                    if provider.is_active:
-                        return True
-            else:
-                return False
+        if excitement_score >= self.share_threshold:
+            return True
+        return False
 
-    def update(self, news, providers, trust_in_providers):
+    def activate(self):
         """
-        Updates the state of the agent. Namely, it computes if the agent should activate or not
-
-        :param news: News
-            News that is shared in the network
-        :param providers: list (list of Agents)
-            represents the information providers
-        :param trust_in_providers: dictionary (normalized) key = name of provider, value = trust in provider (float in [0,1])
-            represents the trust in the information providers
+        Activates the agent if it can be activated
         """
-
-        if self.activates(news, providers, trust_in_providers):
-            self.is_active = True
-        else:
-            pass  # do nothing
+        self.is_active = True
 
     def __str__(self):
         return f'Agent: \n' \
                f'\tshare threshold: {self.share_threshold}\n' \
                f'\ttruth weight {self.truth_weight}\n' \
-               f'\talready shared news: {self.is_active}'
+               f'\tactive: {self.is_active}'

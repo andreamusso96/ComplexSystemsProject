@@ -1,10 +1,12 @@
 import networkx as nx
 import numpy as np
+
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from agent import Agent
-from news import News
+from .agent import Agent
+from .news import News
+from .graphplot import ColorMaps, plot
 
 
 class World:
@@ -57,10 +59,16 @@ class World:
         self.fig = None
         self.ax = None
 
+        # Attributes for the simulation
+        self.next_nodes = []
+
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
         for node in initial_sharing:
-            node.is_active = True
+            node.activate()
+            # Add out-going nodes to next_nodes
+            for (self_node, nbr_node) in self.graph.edges(node):
+                self.next_nodes.append(nbr_node)
 
     def _create_agents(self):
         """ Creates the agents with random share_threshold and truth_weight values """
@@ -82,9 +90,16 @@ class World:
         graph = nx.DiGraph()
         graph.add_nodes_from(self.agents)
 
-        # Same weight for all edges
+        # Add edges to graph
         for (a, b) in small_graph.edges():
-            graph.add_edge(self.agents[a], self.agents[b], weight=1.0)
+            graph.add_edge(self.agents[a], self.agents[b])
+
+        # Set weights on edges
+        for node in graph.nodes():
+            # Set out-degree as weight on out-going edges
+            out_degree = graph.out_degree[node]
+            for edge in graph.edges(node):
+                graph.edges[edge]['weight'] = out_degree
 
         # Normalize over in-going edges
         for node in graph.nodes():
@@ -104,10 +119,7 @@ class World:
         for i in range(time_steps):
             activating_nodes = []
             # Go through all the nodes
-            for node in self.graph.nodes():
-
-                # Update the status of each node in order
-
+            for node in self.next_nodes:
                 # Go through in-going edges to get providers and trust values
                 providers = []
                 trust_in_providers = {}
@@ -120,21 +132,24 @@ class World:
                 if node.activates(self.news, providers, trust_in_providers):
                     activating_nodes.append(node)
 
-            # Activate all nodes which should be active this round
+            # Empty next_nodes
+            self.next_nodes = []
+
+            # Activate all nodes which active this round
             for node in activating_nodes:
-                node.is_active = True
+                node.activate()
+                # Add out-going nodes to next_nodes
+                for (self_node, nbr_node) in self.graph.edges(node):
+                    self.next_nodes.append(nbr_node)
 
             # Update the time in the news
             self.news.update()
 
-    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0),
-             node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0), new_figure=True):
+    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.is_active else 0),
+             node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0)):
 
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
-        if new_figure:
-            plt.figure()
-
         plot(self.graph,
              pos=self.graph_layout,
              clr=node_color_function,
@@ -148,18 +163,17 @@ class World:
             self.update()
 
         self.ax.clear()
-        self.draw(new_figure=False)
+        self.draw()
         self.ax.set_title('Frame ' + str(n))
 
-    def animate(self, frames=10, interval=100, path='animation'):
-        """Runs the animation."""
+    def animate(self, frames=10, interval=1000, path='animation'):
+        """ Runs the animation. """
         if self.fig is None:
             self.fig = plt.figure(figsize=(17, 9), dpi=300)
         if self.ax is None:
             self.ax = self.fig.add_subplot(1, 1, 1)
 
-        text = "Agents: " + str(self.num_agents) + " news fitness: " + str(self.news.fitness) + " news truth: " + str(
-            self.news.truth_value)
+        text = "Agents: " + str(self.num_agents) + " news fitness: " + str(self.news.fitness) + " news truth: " + str(self.news.truth_value)
         plt.gcf().text(0.4, 0.07, text, fontsize=14)
 
         animation = FuncAnimation(self.fig, self._next_frame, frames=frames, interval=interval, repeat=False)
