@@ -109,9 +109,9 @@ class Agent:
                     return True
         return False
 
-    def update(self):
+    def activate(self):
         """
-        Updates the state of the agent.
+        Activates the agent
         """
         self.is_active = True
 

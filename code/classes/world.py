@@ -1,11 +1,14 @@
 import networkx as nx
 import numpy as np
+
+import matplotlib
+matplotlib.use('agg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from agent import Agent
-from news import News
-from graphplot import plot
+from .agent import Agent
+from .news import News
+from .graphplot import ColorMaps, plot
 
 
 class World:
@@ -61,7 +64,7 @@ class World:
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
         for node in initial_sharing:
-            node.is_active = True
+            node.activate()
 
     def _create_agents(self):
         """ Creates the agents with random share_threshold and truth_weight values """
@@ -83,9 +86,16 @@ class World:
         graph = nx.DiGraph()
         graph.add_nodes_from(self.agents)
 
-        # Same weight for all edges
+        # Add edges to graph
         for (a, b) in small_graph.edges():
-            graph.add_edge(self.agents[a], self.agents[b], weight=1.0)
+            graph.add_edge(self.agents[a], self.agents[b])
+
+        # Set weights on edges
+        for node in graph.nodes():
+            # Set out-degree as weight of all out-going edges
+            out_degree = graph.out_degree[node]
+            for edge in graph.out_edges():
+                graph.edges[edge]['weight'] = out_degree
 
         # Normalize over in-going edges
         for node in graph.nodes():
@@ -120,19 +130,16 @@ class World:
 
             # Activate all nodes which active this round
             for node in activating_nodes:
-                node.is_active = True
+                node.activate()
 
             # Update the time in the news
             self.news.update()
 
-    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0),
-             node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0), new_figure=True):
+    def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.is_active else 0),
+             node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0)):
 
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
-        if new_figure:
-            plt.figure()
-
         plot(self.graph,
              pos=self.graph_layout,
              clr=node_color_function,
@@ -146,10 +153,10 @@ class World:
             self.update()
 
         self.ax.clear()
-        self.draw(new_figure=False)
+        self.draw()
         self.ax.set_title('Frame ' + str(n))
 
-    def animate(self, frames=10, interval=100, path='animation'):
+    def animate(self, frames=10, interval=1000, path='animation'):
         """Runs the animation."""
         if self.fig is None:
             self.fig = plt.figure(figsize=(17, 9), dpi=300)
