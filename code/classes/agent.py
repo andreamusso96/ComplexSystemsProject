@@ -102,7 +102,11 @@ class Agent:
             excitement_score = self.compute_excitement(news, truth_likelihood)
 
             if excitement_score >= self.share_threshold:
-                return True
+                # If some provider is active, return true. This is to model the fact that a node can activate
+                # Only if one of his providers is already active
+                for provider in providers:
+                    if provider.is_active:
+                        return True
             else:
                 return False
 
