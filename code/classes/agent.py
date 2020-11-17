@@ -11,8 +11,8 @@ class Agent:
             how much excitement about a news an agent needs before he shares it.
         truth_weight: float between 0 and 1
             how important it is for the agent that the news have a high truth likelihood.
-        has_shared: bool
-            if the agent has already shared the news
+        is_active: bool
+            if the agent is active (has shared the news)
 
     Methods:
         compute_truth_likelihood(provider, trust_in_providers)
@@ -25,7 +25,7 @@ class Agent:
             updates the state of the agent
     """
 
-    def __init__(self, share_threshold, truth_weight):
+    def __init__(self, name, share_threshold, truth_weight):
         """
         Represents an agent in the network
 
@@ -37,10 +37,10 @@ class Agent:
         assert 0 <= share_threshold <= 1, 'Invalid value for share_threshold. Value should be between 0 and 1'
         assert 0 <= truth_weight <= 1, 'Invalid value for truth_weight. Value should be between 0 and 1'
 
+        self.name = name
         self.share_threshold = share_threshold
         self.truth_weight = truth_weight
-        self.has_shared = False
-        self.activatable = False
+        self.is_active = False
 
     def compute_truth_likelihood(self, providers, trust_in_providers):
         """
@@ -48,15 +48,21 @@ class Agent:
 
         :param providers: list (list of Agents)
             represents the information providers
-        :param trust_in_providers: numpy.ndarray (normalized)
+        :param trust_in_providers: dictionary (normalized) key = name of provider, value = trust in provider (float in [0,1])
             represents the trust in the information providers
         :return: float
             Truth likelihood of the news
         """
-        assert np.isclose(1, np.sum(trust_in_providers)), 'Invalid value for trust_in_providers. Array should be normalized'
+        assert np.isclose(1, np.sum(list(trust_in_providers.values()))), 'Invalid value for trust_in_providers. Array ' \
+                                                                         'should be normalized '
 
-        sharing_providers = [idx for idx, provider in enumerate(providers) if provider.has_shared]
-        return np.sum(trust_in_providers[sharing_providers]) + (np.random.rand()-0.5)/100  # adding 1% random stochastic noise
+        truth_likelihood = (np.random.rand() - 0.5) / 100  # some noise
+        for provider in providers:
+            # For each active provider we add the trust in that provider to the truth likelihood
+            if provider.is_active:
+                truth_likelihood = truth_likelihood + trust_in_providers[provider.name]
+
+        return truth_likelihood
 
     def compute_excitement(self, news, truth_likelihood):
         """
@@ -69,51 +75,48 @@ class Agent:
         :return: float
             Excitement score of the news
         """
-        
-        return (self.truth_weight * truth_likelihood + (1 - self.truth_weight) * news.fitness) * np.exp(-news.time)
+        excitement_score = (self.truth_weight * truth_likelihood + (1 - self.truth_weight) * news.fitness) * np.exp(
+            -0.01 * news.time)
+        return excitement_score
 
-    def is_sharing(self, news, providers, trust_in_providers):
+    def activates(self, news, providers, trust_in_providers):
         """
-        If the agent will share the news.
-
-        Functions returns True if
-         - the agent has not shared the news before
-         - and, the excitement score is bigger than the share threshold
+        Computes if the agent should activate or not.
 
         :param news: News
             News that is shared in the network
         :param providers: list (list of Agents)
-            represents the information providers
-        :param trust_in_providers: numpy.ndarray (normalized)
+            represents the information provider
+        :param trust_in_providers: dictionary (normalized) key = name of provider, value = trust in provider (float in [0,1])
             represents the trust in the information providers
-        :return: bool
-            If the agent shares the news
+        :return: boolean
+            True if agent activates in this round and false otherwise (is already active or does not activate)
         """
         assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
 
-        if self.has_shared or not self.activatable:
+        if self.is_active:
             return False
 
+        # check if agent should activate
         truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
         excitement_score = self.compute_excitement(news, truth_likelihood)
 
         if excitement_score >= self.share_threshold:
-            return True
+            # If some provider is active, return true. This is to model the fact that a node can activate
+            # Only if one of his providers is already active
+            for provider in providers:
+                if provider.is_active:
+                    return True
         return False
 
     def update(self):
         """
-        Update the state of the agent.
-
-        Sets the has_shared attribute to True.
+        Updates the state of the agent.
         """
-        self.has_shared = True
-
-    def make_activatable(self):
-        self.activatable = True
+        self.is_active = True
 
     def __str__(self):
         return f'Agent: \n' \
                f'\tshare threshold: {self.share_threshold}\n' \
                f'\ttruth weight {self.truth_weight}\n' \
-               f'\talready shared news: {self.has_shared}'
+               f'\tactive: {self.is_active}'

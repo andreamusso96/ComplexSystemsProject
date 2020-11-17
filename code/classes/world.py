@@ -1,8 +1,11 @@
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-from .agent import Agent
-from .news import News
-from .graphplot import *
+from agent import Agent
+from news import News
+from graphplot import plot
 
 
 class World:
@@ -27,6 +30,7 @@ class World:
             Return the number of agents that currently share the news
 
     """
+
     def __init__(self, num_agents=50, num_sharing=1, news_fitness=0.5, news_truth=1, agents=None, graph=None):
         """
         Represents the world in which the agents live and interact.
@@ -40,7 +44,7 @@ class World:
         :param news_truth: float in [0, 1]
             Truth value of news
         """
-        assert num_sharing <= num_agents, f'Invalid value for num_sharing. Value has to be smaller than num_agents={num_agents}'
+        assert num_sharing <= num_agents, f'Invalid value for num_sharing. Value has to be smaller than num_agents'
         assert 0 <= news_fitness <= 1, 'Invalid value for news_fitness. Value has to be between 0 and 1'
         assert 0 <= news_truth <= 1, 'Invalid value for news_truth. Value has to be between 0 and 1'
 
@@ -57,11 +61,7 @@ class World:
         # Choose the agents that initially share the news
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
         for node in initial_sharing:
-            node.update()
-            node.make_activatable()
-            for edge in self.graph.out_edges(node):
-                self_node, nbr_node = edge
-                nbr_node.make_activatable()
+            node.is_active = True
 
     def _create_agents(self):
         """ Creates the agents with random share_threshold and truth_weight values """
@@ -71,7 +71,7 @@ class World:
 
         agents = []
         for i in range(self.num_agents):
-            agents.append(Agent(share_thresholds[i], truth_weights[i]))
+            agents.append(Agent(str(i), share_thresholds[i], truth_weights[i]))
 
         return agents
 
@@ -103,39 +103,36 @@ class World:
             Number of timesteps that are simulated
         """
         for i in range(time_steps):
-            sharing_agents = []
+            activating_nodes = []
+            # Go through all the nodes
             for node in self.graph.nodes():
                 # Go through in-going edges to get providers and trust values
                 providers = []
-                trust_in_providers = []
+                trust_in_providers = {}
                 for edge in self.graph.in_edges(node):
                     nbr_node, self_node = edge
                     providers.append(nbr_node)
-                    trust_in_providers.append(self.graph.edges[edge]['weight'])
+                    trust_in_providers[nbr_node.name] = self.graph.edges[edge]['weight']
 
-                # Check if agent shares the news
-                if node.is_sharing(self.news, providers, np.array(trust_in_providers)):
-                    sharing_agents.append(node)
+                # Check if the node activates
+                if node.activates(self.news, providers, trust_in_providers):
+                    activating_nodes.append(node)
 
-            # Update agents that share the news
-            for node in sharing_agents:
-                node.update()
-                # Activate agents on out-going edges
-                for edge in self.graph.out_edges(node):
-                    self_node, nbr_node = edge
-                    nbr_node.make_activatable()
+            # Activate all nodes which active this round
+            for node in activating_nodes:
+                node.is_active = True
 
-            # Update new (increase time)
+            # Update the time in the news
             self.news.update()
-    
+
     def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.has_shared else 0),
              node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0), new_figure=True):
-            
+
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
         if new_figure:
             plt.figure()
-    
+
         plot(self.graph,
              pos=self.graph_layout,
              clr=node_color_function,
@@ -165,9 +162,6 @@ class World:
         animation = FuncAnimation(self.fig, self._next_frame, frames=frames, interval=interval, repeat=False)
         animation.save(path + str('.mp4'), writer='ffmpeg')
 
-    def get_number_sharing_agents(self):
+    def get_number_active_agents(self):
         """ Returns the number of agents that are currently sharing the news """
-        return np.sum([1 for agent in self.agents if agent.has_shared])
-
-
-
+        return np.sum([1 for agent in self.agents if agent.is_active])
