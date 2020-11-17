@@ -40,6 +40,7 @@ class Agent:
         self.share_threshold = share_threshold
         self.truth_weight = truth_weight
         self.has_shared = False
+        self.activatable = False
 
     def compute_truth_likelihood(self, providers, trust_in_providers):
         """
@@ -90,7 +91,7 @@ class Agent:
         """
         assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
 
-        if self.has_shared:
+        if self.has_shared or not self.activatable:
             return False
 
         truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
@@ -107,6 +108,9 @@ class Agent:
         Sets the has_shared attribute to True.
         """
         self.has_shared = True
+
+    def make_activatable(self):
+        self.activatable = True
 
     def __str__(self):
         return f'Agent: \n' \

@@ -1,6 +1,3 @@
-import networkx as nx
-import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 from .agent import Agent
@@ -61,6 +58,10 @@ class World:
         initial_sharing = np.random.choice(self.graph.nodes(), num_sharing)
         for node in initial_sharing:
             node.update()
+            node.make_activatable()
+            for edge in self.graph.out_edges(node):
+                self_node, nbr_node = edge
+                nbr_node.make_activatable()
 
     def _create_agents(self):
         """ Creates the agents with random share_threshold and truth_weight values """
@@ -119,6 +120,11 @@ class World:
             # Update agents that share the news
             for node in sharing_agents:
                 node.update()
+                # Activate agents on out-going edges
+                for edge in self.graph.out_edges(node):
+                    self_node, nbr_node = edge
+                    nbr_node.make_activatable()
+
             # Update new (increase time)
             self.news.update()
     
