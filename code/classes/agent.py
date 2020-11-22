@@ -9,12 +9,13 @@ class Agent:
     Attributes:
         share_threshold: float between 0 and 1
             how much excitement about a news an agent needs before he shares it.
-        truth_weight: float between 0 and 1
-            how important it is for the agent that the news have a high truth likelihood.
+        truthfulness_opinion: float between -1 and 1
+            what agent thinks about the truthfulness of the news (−1: fake news, 1: true news)
         is_active: bool
             if the agent is active (has shared the news)
-        activatable: bool
-            if the agent can be activated (if is_active can be set to True)
+        State: string
+            state of the agent: ignorant, inactivate or active    
+
 
     Methods:
         compute_truth_likelihood(provider, trust_in_providers)
@@ -23,26 +24,27 @@ class Agent:
             computes the excitement score of the news
         is_sharing(news)
             returns True if the agent will share the news
-        update()
-            updates the state of the agent
     """
 
-    def __init__(self, name, share_threshold, truth_weight):
+    def __init__(self, name, share_threshold, truthfulness_opinion):
         """
         Represents an agent in the network
 
         :param share_threshold: float in [0, 1]
             how much excitement about a news an agent needs before he shares it.
-        :param truth_weight: float in [0, 1]
-            how important it is that the news have a high truth likelihood
+        :param truthfulness_opinion: float in [-1, 1]
+            what the agent think about the truthfulness of the news
         """
         assert 0 <= share_threshold <= 1, 'Invalid value for share_threshold. Value should be between 0 and 1'
-        assert 0 <= truth_weight <= 1, 'Invalid value for truth_weight. Value should be between 0 and 1'
+        assert -1 <= truthfulness_opinion <= 1, 'Invalid value for truthfulness_opinion. Value should be between -1 and 1'
 
         self.name = name
         self.share_threshold = share_threshold
-        self.truth_weight = truth_weight
+        self.truthfulness_opinion = truthfulness_opinion
+        self.State = 'ignorant'
+        #just for reading info about state, not modifing state
         self.is_active = False
+        
 
     def compute_truth_likelihood(self, providers, trust_in_providers):
         """
@@ -55,7 +57,7 @@ class Agent:
         :return: float
             Truth likelihood of the news
         """
-        assert np.isclose(1, np.sum(list(trust_in_providers.values()))), 'Invalid value for trust_in_providers. Array ' \
+        assert (1 - np.sum(list(trust_in_providers.values()))>=0), 'Invalid value for trust_in_providers. Array ' \
                                                                          'should be normalized '
 
         truth_likelihood = (np.random.rand() - 0.5) / 100  # some noise
@@ -77,8 +79,9 @@ class Agent:
         :return: float
             Excitement score of the news
         """
-        excitement_score = (self.truth_weight * truth_likelihood + (1 - self.truth_weight) * news.fitness) * np.exp(
-            -0.01 * news.time)
+        indipendent_thought = 1 - truth_likelihood
+        excitement_score = (truth_likelihood + self.truthfulness_opinion * indipendent_thought + news.fitness) * np.exp(
+            -0.01 * news.time)/2 # here we set c = 0.01
         return excitement_score
 
     def activates(self, news, providers, trust_in_providers):
@@ -98,7 +101,9 @@ class Agent:
 
         if self.is_active:
             return False
-
+        # if this function was called it's because the news reached the agent
+        self.State = 'inactive'
+        
         # check if agent should activate
         truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
         excitement_score = self.compute_excitement(news, truth_likelihood)
@@ -111,10 +116,12 @@ class Agent:
         """
         Activates the agent if it can be activated
         """
+        self.State = 'active'
         self.is_active = True
 
     def __str__(self):
         return f'Agent: \n' \
                f'\tshare threshold: {self.share_threshold}\n' \
-               f'\ttruth weight {self.truth_weight}\n' \
-               f'\tactive: {self.is_active}'
+               f'\ttruthfulness opinion {self.truthfulness_opinion}\n' \
+               f'\tactive: {self.is_active}\n' \
+               f'\tstate: {self.state}'
