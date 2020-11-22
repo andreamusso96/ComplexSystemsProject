@@ -134,7 +134,9 @@ class World:
 
             # Empty next_nodes
             self.next_nodes = []
-
+            
+            # Stop the news spreading if during last step no node changed his state
+            if not activating_nodes :break
             # Activate all nodes which active this round
             for node in activating_nodes:
                 node.activate()
