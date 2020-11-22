@@ -184,3 +184,39 @@ class World:
     def get_number_active_agents(self):
         """ Returns the number of agents that are currently sharing the news """
         return np.sum([1 for agent in self.agents if agent.is_active])
+		
+	def get_expected_number_of_influenced_agents(self, start_agent, probs):
+		"""calculate expected number of influenced agents, discounting any agents that are already influenced (stored in probabilities)"""
+		queue = [(start_agent, 1.0)]
+		expected = 0.0
+		#Problem with this BFS: agents can have pairwise bidirectional influences on each other so which one can influence which is arbitrary here
+		#one workaround could be to use a Priority Queue
+		while len(queue) > 0: 
+			agent, p = queue.pop(0)
+			additional_influence = p if 1.0 - probs[agent] >= p else 1.0 - probs[agent]
+			expected += additional_influence
+			probs[agent] += additional_influence
+			# probs[agent] = probability of agent becoming active given start_agent started sending news
+			for x, neighbour in self.graph.out_edges(agent):
+				if probs[neighbour] < 1.0: # what condition here?
+					influence = 0 #how is this calculated
+					queue.append(neighbour, influence)
+		return (expected, probs) 
+	
+	def approx_most_influential(self, k):
+		"""approximate k-set of most influential nodes"""
+		most_influential = []
+		probs = dict()
+		for i in range(k):
+			best = None
+			probscopy = None
+			expected_reached = -1
+			for agent in self.agents:
+				n, n_probs = get_expected_number_of_influenced_agents(agent, probs.copy())
+				if (n > expected_reached):
+					best = agent
+					probscopy = n_probs
+					expected_reached = n
+			most_influential.append(best)
+			probs = probscopy
+		return most_influential
