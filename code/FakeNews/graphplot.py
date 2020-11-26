@@ -44,13 +44,11 @@ def readCMap(name):
     """
     function that reads triples of values from a .csv file into a list
     """
-    map = []
+    my_map = []
     with open(name + ".csv") as cmap:
         reader = csv.reader(cmap, delimiter=',')
         for row in reader:
             if "#" in row[0]:  # comment
                 continue
-            map.append((float(row[1]), float(row[2]), float(row[3])))
-    return map
-
-
+            my_map.append((float(row[1]), float(row[2]), float(row[3])))
+    return my_map
