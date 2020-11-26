@@ -148,8 +148,11 @@ class World:
             self.news.update()
 
     def draw(self, node_color_function=lambda a: ColorMaps.coolwarm(1 if a.is_active else 0),
-             node_size_function=lambda a: 200, edge_color_function=lambda x, y: (0, 0, 0)):
-
+             node_size_function=lambda a: 25, edge_color_function=lambda x, y: (0, 0, 0), show=False):
+        if self.fig is None: #add figure if this is called outside of animation
+            self.fig = plt.figure(figsize=(17, 9), dpi=300)
+        if self.ax is None: #add subplot if this is called outside of animation
+            self.ax = self.fig.add_subplot(1, 1, 1)
         if self.graph_layout is None:
             self.graph_layout = nx.spring_layout(self.graph)
         plot(self.graph,
@@ -158,6 +161,9 @@ class World:
              size=node_size_function,
              edge_clr=edge_color_function,
              ax=self.ax)
+        if show:
+            self.fig.show()
+            plt.show()
 
     def _next_frame(self, n):
         """Calls update function and then draws the graph at frame n as part of the animation."""
@@ -184,39 +190,65 @@ class World:
     def get_number_active_agents(self):
         """ Returns the number of agents that are currently sharing the news """
         return np.sum([1 for agent in self.agents if agent.is_active])
-		
-	def get_expected_number_of_influenced_agents(self, start_agent, probs):
-		"""calculate expected number of influenced agents, discounting any agents that are already influenced (stored in probabilities)"""
-		queue = [(start_agent, 1.0)]
-		expected = 0.0
-		#Problem with this BFS: agents can have pairwise bidirectional influences on each other so which one can influence which is arbitrary here
-		#one workaround could be to use a Priority Queue
-		while len(queue) > 0: 
-			agent, p = queue.pop(0)
-			additional_influence = p if 1.0 - probs[agent] >= p else 1.0 - probs[agent]
-			expected += additional_influence
-			probs[agent] += additional_influence
-			# probs[agent] = probability of agent becoming active given start_agent started sending news
-			for x, neighbour in self.graph.out_edges(agent):
-				if probs[neighbour] < 1.0: # what condition here?
-					influence = 0 #how is this calculated
-					queue.append(neighbour, influence)
-		return (expected, probs) 
-	
-	def approx_most_influential(self, k):
-		"""approximate k-set of most influential nodes"""
-		most_influential = []
-		probs = dict()
-		for i in range(k):
-			best = None
-			probscopy = None
-			expected_reached = -1
-			for agent in self.agents:
-				n, n_probs = get_expected_number_of_influenced_agents(agent, probs.copy())
-				if (n > expected_reached):
-					best = agent
-					probscopy = n_probs
-					expected_reached = n
-			most_influential.append(best)
-			probs = probscopy
-		return most_influential
+        
+    @staticmethod
+    def reachable(network, starting_set):
+        """do dfs over network and count reachable nodes"""
+        vis = {}
+        reached = 0
+        for agent in network.nodes():
+            vis[agent] = False
+        for agent in starting_set:
+            vis[agent] = True
+            reached += 1
+        stack = starting_set.copy() #copy so that starting_set is not changed
+        while len(stack) > 0: #while stack not empty
+            v = stack.pop()
+            for n in network[v]: #for every neighbour
+                if not vis[n]: #if he is not visited
+                    vis[n] = True
+                    reached += 1
+                    stack.append(n)
+        return reached
+        
+    def get_expected_number_of_influenced_agents(self, start_agents, n_iterations):
+        """calculate expected number of influenced agents (average over n_iterations)"""
+        expected = 0
+        for iter in range(n_iterations):
+            sample_graph = nx.DiGraph() #DiGraph
+            sample_graph.add_nodes_from(self.graph.nodes())
+            for agent in sample_graph.nodes():
+                providers = []
+                trust_in_providers = {}
+                for edge in self.graph.in_edges(agent):
+                    nbr_node, self_node = edge
+                    providers.append(nbr_node)
+                    trust_in_providers[nbr_node.name] = self.graph.edges[edge]['weight'] - np.finfo(np.float32).eps #some errors?
+                check = np.sum(list(trust_in_providers.values()))
+                independence = 1.0 - agent.compute_truth_likelihood(providers, trust_in_providers)
+                independence = 1.0 if independence > 1.0 else independence #some errors?
+                pr = [independence * trust_in_providers[prov.name] for prov in providers] 
+                pr.append(1.0 - sum(pr))
+                providers.append(None)
+                c = np.random.choice(providers, p=pr)
+                if c is not None:
+                    sample_graph.add_edge(c, agent)
+            expected += World.reachable(sample_graph, start_agents)
+        return expected / n_iterations
+    
+    def approx_most_influential(self, k):
+        """approximate k-set of most influential nodes"""
+        most_influential = []
+        for i in range(k):
+            best = None
+            expected_reached = -1
+            for agent in self.agents:
+                most_influential.append(agent) #add current agent
+                e = self.get_expected_number_of_influenced_agents(most_influential, 100) #sample 100 graphs
+                if e > expected_reached:
+                    best = agent
+                    expected_reached = e
+                most_influential.pop() #remove current agent
+            most_influential.append(best) #add best agent
+            print(len(most_influential), "nodes found")
+        return most_influential
