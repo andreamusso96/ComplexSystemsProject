@@ -3,6 +3,7 @@ import numpy as np
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+from matplotlib.patches import ArrowStyle
 
 from .agent import Agent
 from .news import News
@@ -277,10 +278,13 @@ class World:
         nx.draw_networkx(graph,
                          pos=pos,
                          ax=ax,
-                         arrowstyle='->',
+                         arrowstyle=ArrowStyle.CurveFilledB(head_length=0.2, head_width=0.1),
+                         arrowsize = max(-0.04 * graph.order() + 10, 1),
                          with_labels=False,
                          node_size=[size(a) for a in list(graph.nodes())],
                          node_color=[clr(a) for a in list(graph.nodes())],
                          edge_color=[edge_clr(u, v) for u, v in list(graph.edges())],
-                         width=0.1
+                         alpha=0.8,
+                         linewidths=0.0,
+                         width=0.2
                          )
