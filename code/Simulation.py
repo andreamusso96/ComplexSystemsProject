@@ -1,6 +1,7 @@
 import Functions
 import copy
 
+
 class Simulation:
 
     def __init__(self, number_agents, threshold, independence, news, simulation_time, initial_active_agents):
@@ -17,7 +18,8 @@ class Simulation:
         self.simulation_time = simulation_time
         self.world = Functions.construct_world_constant_parameters(number_agents, threshold, independence,
                                                                    news)
-        self.simulation_data = dict.fromkeys(list(range(simulation_time)))
+        self.simulation_data = dict.fromkeys(list(
+            range(simulation_time)))  # This is a dictionary with key  = time and value = copy of world at that time
 
         # Active the nodes in initial_active_nodes
         self.activate_agents(initial_active_agents)
@@ -37,7 +39,7 @@ class Simulation:
 
         for t in range(self.simulation_time):  # For each time step
             print('Time: ', t)
-            self.simulation_data[t] = copy.deepcopy(self.world) # Save the simulation data
+            self.simulation_data[t] = copy.deepcopy(self.world)  # Save the simulation data (i.e. the current world)
             """for agent in self.world.agents.values():
                 print(' ')
                 print('--------------------')

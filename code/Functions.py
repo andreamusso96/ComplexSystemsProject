@@ -28,7 +28,7 @@ def construct_agents(names, thresholds, independence, news, graph):
             providers.append(tail)
             weights_providers[tail] = graph.edges[edge]['weight']
 
-        # For each edge in the graph pointing away from the vertex with name = name of the agent, we add the point of the edge to the recievers of the agent
+        # For each edge in the graph pointing away from the vertex with name = name of the agent, we add the point of the edge to the receivers of the agent
         # We also add the weight of the edge to the weights_receivers
         receivers = []
         weights_receivers = {}
