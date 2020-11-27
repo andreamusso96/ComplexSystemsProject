@@ -102,6 +102,17 @@ class Agent:
         else:
             print('Error: provider is inactive')
 
+    def agent_node_color(self):
+        """
+        :return: integer, name of the news with respect which the agent is active = node color
+        """
+        # If the agent is active agent_node_color =  name of the news with respect to which he is active (i.e. an integer).
+        if self.is_active():
+            agent_node_color = self.name_news_active()
+        else:
+            agent_node_color = 0
+        return agent_node_color
+
     def __str__(self):
         info_agent_string = 'Agent: ' + str(self.name) \
                             + '\n' + 'states: ' + str(self.states) \

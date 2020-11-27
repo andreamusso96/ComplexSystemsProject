@@ -15,7 +15,8 @@ def construct_agents(names, thresholds, independence, news, graph):
     :param graph: nx.DiGraph, a directed graph representing the connections between the agents
     :return: agents: a dictionary, key = name of agents, value = agent class
     """
-    states = dict([(n.name, 0) for n in news.values()]) # Declare the states of all agents with respect to the news. By default all agents are ignorant wrt all news
+    states = dict([(n.name, 0) for n in
+                   news.values()])  # Declare the states of all agents with respect to the news. By default all agents are ignorant wrt all news
     agents = {}
     for name in names:
         providers = []
@@ -97,9 +98,9 @@ def construct_world(names_agents, thresholds, independence, news):
     :param news: dictionary, key = name of news, value = news object (see class News)
     :return: world: an instance of the World class, with agents, news and a graph
     """
-    graph = create_graph(len(names_agents)) # Construct a graph
-    agents = construct_agents(names_agents, thresholds, independence, news, graph) # Construct the agents
-    world = World(agents, news, graph) #Construct the world
+    graph = create_graph(len(names_agents))  # Construct a graph
+    agents = construct_agents(names_agents, thresholds, independence, news, graph)  # Construct the agents
+    world = World(agents, news, graph)  # Construct the world
     return world
 
 
@@ -112,7 +113,8 @@ def construct_world_constant_parameters(number_agents, threshold, independence, 
     :param news: dictionary, key = name of news, value = news object (see class News)
     :return: world: an instance of the World class, with agents, news and a graph
     """
-    graph = create_graph(number_agents) # Construct a graph
-    agents = construct_agent_constant_parameters(number_agents, threshold, independence, news, graph) # Construct the agents
-    world = World(agents, news, graph) #Construct the world
+    graph = create_graph(number_agents)  # Construct a graph
+    agents = construct_agent_constant_parameters(number_agents, threshold, independence, news,
+                                                 graph)  # Construct the agents
+    world = World(agents, news, graph)  # Construct the world
     return world

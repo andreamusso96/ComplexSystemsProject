@@ -1,5 +1,5 @@
 import Functions
-
+import copy
 
 class Simulation:
 
@@ -17,7 +17,7 @@ class Simulation:
         self.simulation_time = simulation_time
         self.world = Functions.construct_world_constant_parameters(number_agents, threshold, independence,
                                                                    news)
-        # self.simulation_data = dict.fromkeys(list(range(simulation_time)))
+        self.simulation_data = dict.fromkeys(list(range(simulation_time)))
 
         # Active the nodes in initial_active_nodes
         self.activate_agents(initial_active_agents)
@@ -28,7 +28,7 @@ class Simulation:
         :param agents_to_activate: dictionary, key = name of agent to activate, value = news wrt which the agent should be activated
         """
         for name_agent in agents_to_activate:
-            self.world.agents[name_agent].state[agents_to_activate[name_agent]] = 2
+            self.world.agents[name_agent].states[agents_to_activate[name_agent]] = 2
 
     def run_simulation(self):
         """
@@ -37,11 +37,12 @@ class Simulation:
 
         for t in range(self.simulation_time):  # For each time step
             print('Time: ', t)
-            self.world.update()  # Update the world
-            for agent in self.world.agents.values():
+            self.simulation_data[t] = copy.deepcopy(self.world) # Save the simulation data
+            """for agent in self.world.agents.values():
                 print(' ')
                 print('--------------------')
                 print(agent)
                 print('--------------------')
-                print(' ')
-            # self.simulation_data[t] = copy.deepcopy(self.world)
+                print(' ')"""
+
+            self.world.update()  # Update the world
