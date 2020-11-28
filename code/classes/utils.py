@@ -2,7 +2,7 @@ import networkx as nx
 import numpy as np
 import copy
 
-from agent import Agent
+from agent import Agent, AgentState
 from world import World
 
 
@@ -18,7 +18,7 @@ def construct_agents(names, thresholds, independence, news, graph):
     :return: agents: a dictionary, key = name of agents, value = agent class
     """
     # Declare the states of all agents with respect to the news. By default all agents are ignorant wrt all news
-    states = dict([(n.name, 0) for n in news.values()])
+    states = dict([(n.name, AgentState.IGNORANT) for n in news.values()])
 
     agents = {}
     for name in names:

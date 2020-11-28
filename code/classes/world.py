@@ -10,13 +10,16 @@ class World:
         self.graph = graph
         self.time = 0
 
-    def update(self):
+    def update(self, verbose=False):
         """
         Executes one update step for the world.
 
         We first find the agents that should change state and then we modify their states.
         We do so in order to prevent cycles in which changing the state of one agent could lead to changing the state
         of other agents in the same time step.
+
+        :param verbose: bool, If true the function will return the number of agents that changed their state during
+                              this update.
         """
 
         agents_changing_state = {}
@@ -37,3 +40,22 @@ class World:
         # Update time
         self.time = self.time + 1
 
+        if verbose:
+            return len(agents_changing_state.keys())
+
+    def full_dynamics(self, max_iter=100):
+        """
+        Updates the world until convergence.
+
+        :param max_iter: int, Maximal number of iterations
+        """
+
+        iteration = 0
+        while iteration < max_iter and self.update(verbose=True):
+            iteration += 1
+
+        number_active = len([agent for agent in self.agents.values() if agent.is_active()])
+        number_inactive = len([agent for agent in self.agents.values() if agent.is_inactive()])
+        number_ignorant = len([agent for agent in self.agents.values() if agent.is_ignorant()])
+
+        return number_active, number_inactive, number_ignorant

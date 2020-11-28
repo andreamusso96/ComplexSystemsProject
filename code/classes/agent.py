@@ -85,7 +85,7 @@ class Agent:
             # If the excitement score of an agent is below the threshold he becomes inactive
             elif excitement_scores[n.name] < self.threshold * (1 - n.sensation) and \
                     self.states[n.name] == AgentState.ACTIVE:
-                updated_states[n.name] = 1
+                updated_states[n.name] = AgentState.INACTIVE
 
         return updated_states
 
@@ -101,6 +101,24 @@ class Agent:
                 return True
 
         return False
+
+    def is_ignorant(self):
+        """
+        Checks if agent is ignorant with respect to all news
+        """
+        for s in self.states.values():
+            if s != AgentState.IGNORANT:
+                return False
+
+        return True
+
+    def is_inactive(self):
+        """
+        Checks if agent is inactive with respect to some news
+
+        Agent is inactive if it is not active and not ignorant
+        """
+        return not self.is_active() and not self.is_ignorant()
 
     def name_news_active(self):
         """
