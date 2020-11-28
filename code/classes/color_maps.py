@@ -1,6 +1,5 @@
-import networkx as nx
-from matplotlib import pyplot as plt
 import csv
+import os
 
 
 class ColorMaps:
@@ -14,12 +13,13 @@ class ColorMaps:
     blackbody_map = None  # static
     coolwarm_map = None
     clamp = lambda x: 0.0 if x < 0.0 else (1.0 if x > 1.0 else x)
+    cmap_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'cmaps')
 
     @staticmethod
     def plasma(x):
         x = ColorMaps.clamp(x)
         if ColorMaps.plasma_map is None:
-            ColorMaps.plasma_map = readCMap("cmaps/plasma_float_0256")
+            ColorMaps.plasma_map = read_cmap(os.path.join(ColorMaps.cmap_path, "plasma_float_0256"))
         i = int((len(ColorMaps.plasma_map) - 1) * x)  # TODO interpolate
         return ColorMaps.plasma_map[i]
 
@@ -27,7 +27,7 @@ class ColorMaps:
     def blackbody(x):
         x = ColorMaps.clamp(x)
         if ColorMaps.blackbody_map is None:
-            ColorMaps.blackbody_map = readCMap("cmaps/blackbody_float_0256")
+            ColorMaps.blackbody_map = read_cmap(os.path.join(ColorMaps.cmap_path, "blackbody_float_0256"))
         i = int((len(ColorMaps.blackbody_map) - 1) * x)  # TODO interpolate
         return ColorMaps.blackbody_map[i]
 
@@ -35,12 +35,12 @@ class ColorMaps:
     def coolwarm(x):
         x = ColorMaps.clamp(x)
         if ColorMaps.coolwarm_map is None:
-            ColorMaps.coolwarm_map = readCMap("cmaps/coolwarm_float_0256")
+            ColorMaps.coolwarm_map = read_cmap(os.path.join(ColorMaps.cmap_path, "coolwarm_float_0256"))
         i = int((len(ColorMaps.coolwarm_map) - 1) * x)  # TODO interpolate
         return ColorMaps.coolwarm_map[i]
 
 
-def readCMap(name):
+def read_cmap(name):
     """
     function that reads triples of values from a .csv file into a list
     """

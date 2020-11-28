@@ -1,16 +1,15 @@
 import networkx as nx
-from graphplot import ColorMaps
 import matplotlib.pyplot as plt
 from matplotlib.patches import ArrowStyle
 from matplotlib.animation import FuncAnimation
 import numpy as np
 from matplotlib.patches import Patch
 
-# Location of you ffmpeg file. This is used to save .mp4 files to you computer
-plt.rcParams['animation.ffmpeg_path'] = '/Users/andreamusso/opt/anaconda3/envs/COSS/bin/ffmpeg'
+from agent import AgentState
+from color_maps import ColorMaps
 
 
-class Plotting:
+class Visualization:
 
     def __init__(self, simulation):
         """
@@ -30,22 +29,24 @@ class Plotting:
 
     def init_color_values_nodes(self):
         """
-        Assigns a color to each state a node can be in. To simplify matters we assume that there is one color all ignorant
-        nodes and one color for all inactive nodes (no matter the news they are inactive about). Moreover,
+        Assigns a color to each state a node can be in. To simplify matters we assume that there is one color all
+        ignorant nodes and one color for all inactive nodes (no matter the news they are inactive about).
+
         :return: color_values: dictionary, key = name of news/ ignorant/ inactive, value = rgb triple to color the node\
         """
+        # Create possible color values
+        colors = np.linspace(0, 1, len(self.simulation.world.news) + 2)
 
-        # Color values
-        colors = np.linspace(0, 1, len(self.simulation.world.news) + 2)  # All possible color value for all news
-        # Create a dictionary key = state of agent, value = color of that state
-        color_values = {'ignorant': ColorMaps.coolwarm(colors[0]),
-                        'inactive': ColorMaps.coolwarm(
-                            colors[1])}  # Initialise colors of ignorant and inactive nodes
+        # Initialise colors of ignorant and inactive nodes
+        color_values = {
+            'ignorant': ColorMaps.coolwarm(colors[0]),
+            'inactive': ColorMaps.coolwarm(colors[1])
+        }
+
+        # Complete the dictionary with (name_news, color) pairs for active nodes wrt to name_news
         counter = 2
         for n in self.simulation.world.news.values():
-            color_values[n.name] = ColorMaps.coolwarm(
-                colors[
-                    counter])  # Complete the dictionary with (name_news, color) pairs for active nodes wrt to name_news
+            color_values[n.name] = ColorMaps.coolwarm(colors[counter])
             counter = counter + 1
 
         return color_values
@@ -54,6 +55,7 @@ class Plotting:
         """
         Creates the legend for plotting graphs (i.e. to each possible color_value_nodes we associate a label telling us
         what that color means
+
         :return: list of Patch object (see matplotlib), this list is exactly what the legend needs
         """
         legend_elements = []
@@ -71,7 +73,7 @@ class Plotting:
         fig, ax = plt.subplots(1, 1)
         fig.set_size_inches(12, 12)
 
-        # Draw graph with on axis (see draw_networkx for all possible parameters)
+        # Draw graph (see draw_networkx for all possible parameters)
         nx.draw_networkx(world.graph,
                          pos=nx.circular_layout(world.graph),
                          ax=ax,
@@ -92,31 +94,34 @@ class Plotting:
     def determine_color_node(self, agent):
         """
         Determines the color a node in the graph should have based on the state of the agent representing that node.
-        :param agent: agent class, the agent of whom we want to determine the color
+
+        :param agent: Agent class, the agent of whom we want to determine the color
         :return: a triple rgb, with the color with which the agent should be colored in the graph
         """
-        color_node = self.color_values_nodes[
-            'ignorant']  # Initially, the agent is colored as an ignorant agent by default
-        if agent.is_active():  # If the agent is active
-            color_node = self.color_values_nodes[
-                agent.name_news_active()]  # We color the agent with the color corresonding to the news wrt which he is active
-        else:  # If the agent is not active
+        # Initially, the agent is colored as an ignorant agent by default
+        color_node = self.color_values_nodes['ignorant']
+
+        # Color the agent with the color corresponding to the news wrt which he is active, else color as inactive
+        if agent.is_active():
+            color_node = self.color_values_nodes[agent.name_news_active()]
+        else:
+            # Color the agent as inactive if he is inactive wrt at least one news
             for news_name in agent.states:
-                if agent.states[news_name] == 1:  # We check if the agent is inactive wrt some news
-                    color_node = self.color_values_nodes['inactive']  # If he is inactive, we set his color to inactive
+                if agent.states[news_name] == AgentState.INACTIVE:
+                    color_node = self.color_values_nodes['inactive']
 
         return color_node
 
     def animate(self, frames, interval=1000, path='animation'):
         """
-        This function creates an animation of the world changing (i.e. graph with nodes changing colors) and then saves it in path
+        Creates an animation of the network dynamics (i.e. graph with nodes changing colors) and then saves it in path
+
         :param frames: integer, number of frames the animation should last
         :param interval: integer, speed of the animation 0 = very fast, 1000 = slow
         :param path: string, the path where the animation should be saved (mp4 file).
         """
-
-        # We use the clas FuncAnimation from matplotlib. Basically, what happens is that at every frame,
-        # The function self._next_frame is called and the return from that function is plotted.
+        # We use the class FuncAnimation from matplotlib. Basically, what happens is that at every frame,
+        # the function self._next_frame is called and the return from that function is plotted.
         animation = FuncAnimation(self.animation_figure, self._next_frame, init_func=self.init_animation, frames=frames,
                                   interval=interval)
         # Saves animation at path
@@ -124,14 +129,14 @@ class Plotting:
 
     def init_animation(self):
         """
-        This function initialises the animation (it tells the animation function what it should plot, self.animation_axis.plot())
-        :return:
+        Initialises the animation (it tells the animation function what it should plot, self.animation_axis.plot())
         """
         return self.animation_axis.plot()
 
     def _next_frame(self, t):
         """
-        Every frame this function is called by the animation class above. The plot returned is the next frame in the animation
+        Creates plot for the next frame in the animation.
+
         :param t: integer, the time step in the animation
         :return: matplotlib.plot, a plot which is the next frame in the animation
         """

@@ -1,4 +1,14 @@
 import copy
+from enum import Enum
+
+
+class AgentState(Enum):
+    """
+    Possible states fro an agent
+    """
+    IGNORANT = 0
+    INACTIVE = 1
+    ACTIVE = 2
 
 
 class Agent:
@@ -6,8 +16,7 @@ class Agent:
                  weights_providers=None, weights_receivers=None):
         """
         :param name: integer, the name of the agent
-        :param states: dictionary, key = name of news, value = state in which the agent is wrt that news.
-        There are three possible states 0 = ignorant, 1 = inactive, 2 = active
+        :param states: dictionary, key = name of news, value = state in which the agent is wrt that news (AgentState).
         :param threshold: float in [0,1], threshold for becoming active
         :param independence: float in [0,1], the level of influence other agents have on the agent
         :param providers: list of integers, list with the names of the information providers
@@ -30,8 +39,7 @@ class Agent:
 
         :param news: dictionary, key = name of news, value = news object
         :param agents: dictionary, key = name of the agent, value = agent object
-        :return: updated_states, dictionary, key = name of the news, value = state in which the agent is wrt that news
-        There are three possible states 0 = ignorant, 1 = inactive, 2 = active
+        :return: updated_states, dictionary, key = name of the news, value = state in which the agent is wrt that news.
         """
 
         # Initialise variables
@@ -39,40 +47,44 @@ class Agent:
         excitement_scores = dict([(n.name, 0) for n in news.values()])
 
         # Compute the excitement score
-        for provider in self.providers:  # Iterate through the providers
-            if agents[provider].is_active():  # If a provider is active
-                name_news_active = agents[provider].name_news_active()  # Find the news wrt which the provider is active
+        for provider in self.providers:
+            if agents[provider].is_active():
+                # Find the news wrt which the provider is active
+                name_news_active = agents[provider].name_news_active()
+
+                # add the weight of the provider to the excitement score of the news wrt which the provider is active
                 excitement_scores[name_news_active] = excitement_scores[name_news_active] + (1 - self.independence) * \
-                                                      self.weights_providers[
-                                                          provider]  # add the weight of the provider to the excitement score of the news wrt which the provider is active
-                if updated_states[name_news_active] == 0:  # If the agent is ignorant
-                    updated_states[name_news_active] = 1  # Update his state to being inactive
+                                                      self.weights_providers[provider]
+
+                # Updates the state to INACTIVE if the state was IGNORANT before
+                if updated_states[name_news_active] == AgentState.IGNORANT:
+                    updated_states[name_news_active] = AgentState.INACTIVE
 
         # Compute if excitement score is above threshold and adjust the state accordingly
-        for n in news.values():  # Iterate through the news
-
-            if excitement_scores[n.name] >= self.threshold * (
-                    1 - n.sensation):  # If a news has a score higher than the threshold
-
-                # There are two options: either the agent is active wrt some other news or he is not.
-                # We treat the first case first
+        for n in news.values():
+            # Check if excitement_score is bigger than threshold
+            if excitement_scores[n.name] >= self.threshold * (1 - n.sensation):
+                # Check if the agent is already active with respect to some other news
                 incumbent = False
                 for nw in news.values():
-                    if self.states[nw.name] == 2:  # If the agent is active with respect to some other news
+                    if nw != n and self.states[nw.name] == AgentState.ACTIVE:
                         incumbent = True
 
-                        # If the excitement score of the other news (news nw) is below the one of the current news under consideration (news n)
-                        # the agent becomes active with respect to the news n. If not he remains active wrt news nw
+                        # If the excitement score of the other news (news nw) is below the one of the current news
+                        # under consideration (news n) the agent becomes active with respect to the news n.
+                        # If not he remains active wrt news nw
                         if excitement_scores[n.name] > excitement_scores[nw.name]:
-                            updated_states[n.name] = 2
-                            updated_states[nw.name] = 1
+                            updated_states[n.name] = AgentState.ACTIVE
+                            updated_states[nw.name] = AgentState.INACTIVE
 
-                # If the agent was not active with respect to any other news (i.e. no incuments), we update his state to active
+                # If the agent was not active with respect to any other news (i.e. no incumbents),
+                # we update his state to active
                 if not incumbent:
-                    updated_states[n.name] = 2
+                    updated_states[n.name] = AgentState.ACTIVE
 
             # If the excitement score of an agent is below the threshold he becomes inactive
-            elif excitement_scores[n.name] < self.threshold * (1 - n.sensation) and self.states[n.name] == 2:
+            elif excitement_scores[n.name] < self.threshold * (1 - n.sensation) and \
+                    self.states[n.name] == AgentState.ACTIVE:
                 updated_states[n.name] = 1
 
         return updated_states
@@ -81,10 +93,11 @@ class Agent:
         """
         Checks if agent is active with respect to some news
 
-        :return: bool, true if agent is active false if not
+        :return: bool, True if agent is active, False if not
         """
-        for s in self.states: # Iterate through the states (i.e. the names of the news)
-            if self.states[s] == 2: # If agent is active wrt some news return True
+        # Iterate through the states (i.e. the names of the news)
+        for s in self.states.values():
+            if s == AgentState.ACTIVE:
                 return True
 
         return False
@@ -96,12 +109,12 @@ class Agent:
         :return: integer, name of the news wrt which the agent is active
         """
         if self.is_active():
-            for news_name in self.states: # Iterate through the states (i.e. the names of the news)
-                if self.states[news_name] == 2: # If the agent is active wrt to some news return the name of the news
+            # Iterate through the states (i.e. the names of the news)
+            for news_name in self.states:
+                if self.states[news_name] == AgentState.ACTIVE:
                     return news_name
-        else:
-            print('Error: provider is inactive')
 
+        print('Error: provider is inactive')
 
     def __str__(self):
         info_agent_string = 'Agent: ' + str(self.name) \

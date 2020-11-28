@@ -4,7 +4,6 @@ import numpy as np
 class News:
     def __init__(self, name, sensation, decay_parameter):
         """
-
         :param name: integer, name of the news
         :param sensation: float in [0,1], measures how much the news is sensational
         :param decay_parameter: float, measures how much the sensationality of the news decays with time.
