@@ -5,8 +5,8 @@ from matplotlib.animation import FuncAnimation
 import numpy as np
 from matplotlib.patches import Patch
 
-from agent import AgentState
-from color_maps import ColorMaps
+from .agent import AgentState
+from .color_maps import ColorMaps
 
 
 class Visualization:
