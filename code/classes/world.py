@@ -1,4 +1,4 @@
-from agent import AgentState
+from .agent import AgentState
 
 
 class World:
@@ -62,7 +62,7 @@ class World:
             for news_name in self.news.keys():
                 number_active[news_name] = len([agent for agent in self.agents.values() if agent.states[news_name] == AgentState.ACTIVE])
         else:
-            number_active = len([agent for agent in self.agents.values if agent.is_active()])
+            number_active = len([agent for agent in self.agents.values() if agent.is_active()])
 
         number_inactive = len([agent for agent in self.agents.values() if agent.is_inactive()])
         number_ignorant = len([agent for agent in self.agents.values() if agent.is_ignorant()])

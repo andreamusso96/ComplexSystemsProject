@@ -83,9 +83,9 @@ class Agent:
                     updated_states[n.name] = AgentState.ACTIVE
 
             # If the excitement score of an agent is below the threshold he becomes inactive
-            elif excitement_scores[n.name] < self.threshold * (1 - n.sensation) and \
+            """elif excitement_scores[n.name] < self.threshold * (1 - n.sensation) and \
                     self.states[n.name] == AgentState.ACTIVE:
-                updated_states[n.name] = AgentState.INACTIVE
+                updated_states[n.name] = AgentState.INACTIVE"""
 
         return updated_states
 

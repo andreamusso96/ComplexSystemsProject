@@ -2,8 +2,8 @@ import networkx as nx
 import numpy as np
 import copy
 
-from agent import Agent, AgentState
-from world import World
+from .agent import Agent, AgentState
+from .world import World
 
 
 def construct_agents(names, thresholds, independence, news, graph):
@@ -133,3 +133,77 @@ def construct_world_constant_parameters(number_agents, threshold, independence, 
     # Constrict the world
     world = World(agents, news, graph)
     return world
+    
+def reachable(network, starting_set):
+    """
+    does DFS over network and counts how many nodes are reachable form the nodes in the starting set
+    
+    :param network: networkx network
+    :param starting_set: the set of nodes of the network from which reachability is tested
+    :return: integer: the number of agents that are reachable form the starting set    
+    """
+    vis = {} #use map to tag visited nodes
+    reached = 0
+    #init
+    for agent in network.nodes(): 
+        vis[agent] = False
+    for agent in starting_set:
+        vis[agent] = True
+        reached += 1
+    #iterative DFS
+    stack = starting_set.copy() #copy so that starting_set is not changed
+    while len(stack) > 0: #while stack not empty
+        v = stack.pop()
+        for n in network[v]: #for every neighbour
+            if not vis[n]: #if it is not visited
+                vis[n] = True #tag as visited
+                reached += 1
+                stack.append(n) #push onto stack
+    return reached
+    
+def get_expected_number_of_influenced_agents(world, start_agents, n_iterations):
+    """
+    calculate expected number of influenced agents (average over n_iterations)
+    :param world: world
+    :param start_agents: list of agents whose influence should be approximated
+    :param n_iterations: number of iterations that are made (more means more accurate approximation)
+    :return: double: expected number of agents influenced if news starts at agents in stating set
+    """
+    expected = 0
+    for iter in range(n_iterations):
+        sample_graph = nx.DiGraph() 
+        sample_graph.add_nodes_from(world.graph.nodes())
+        for a in sample_graph.nodes():
+            providers = world.agents[a].providers.copy()
+            pr = [world.agents[a].independence * world.agents[a].weights_providers[prov] for prov in providers] #also a copy
+            pr.append(1.0 - sum(pr))
+            providers.append(None)
+            c = np.random.choice(providers, p=pr)
+            if c is not None:
+                sample_graph.add_edge(c, a)
+        expected += reachable(sample_graph, start_agents)
+    return expected / n_iterations
+    
+def approx_most_influential(world, k, sample_size=100, verbose=True):
+    """
+    approximate k-set of most influential nodes
+    :param world: world
+    :param k: integer: gives the size of the set that is sought
+    :param sample_size: integer: the number of times a graph is sampled, higher means more accurate approximation
+    :return: list: k-set of agents that are expected to be the k most influential nodes in the network (approximation)
+    """
+    most_influential = []
+    for i in range(k):
+        best = None
+        expected_reached = -1
+        for a in world.agents.keys():
+            most_influential.append(a) #add current agent
+            e = get_expected_number_of_influenced_agents(world, most_influential, sample_size) #sample graphs
+            if e > expected_reached:
+                best = a
+                expected_reached = e
+            most_influential.pop() #remove current agent
+        most_influential.append(best) #add best agent
+        if verbose: 
+            print(world.agents[most_influential[-1]].name)
+    return [world.agents[a] for a in most_influential]
