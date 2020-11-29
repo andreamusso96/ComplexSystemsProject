@@ -1,3 +1,6 @@
+from agent import AgentState
+
+
 class World:
     def __init__(self, agents, news, graph):
         """
@@ -54,7 +57,13 @@ class World:
         while iteration < max_iter and self.update(verbose=True):
             iteration += 1
 
-        number_active = len([agent for agent in self.agents.values() if agent.is_active()])
+        if len(self.news.keys()) > 1:
+            number_active = {}
+            for news_name in self.news.keys():
+                number_active[news_name] = len([agent for agent in self.agents.values() if agent.states[news_name] == AgentState.ACTIVE])
+        else:
+            number_active = len([agent for agent in self.agents.values if agent.is_active()])
+
         number_inactive = len([agent for agent in self.agents.values() if agent.is_inactive()])
         number_ignorant = len([agent for agent in self.agents.values() if agent.is_ignorant()])
 
