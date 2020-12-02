@@ -18,7 +18,7 @@ class News:
         Updates the parameters of the news. That is, it increases by one the time the news has been out and it decreases
         the sensationality of the news via the decay parameter.
         """
-        self.sensation = self.sensation * np.exp(-self.decay_parameter * self.time_out)
+        self.sensation = self.sensation * np.exp(-self.decay_parameter)
         self.time_out = self.time_out + 1
 
     def __str__(self):
