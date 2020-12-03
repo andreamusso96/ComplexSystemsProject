@@ -2,8 +2,8 @@ import networkx as nx
 import numpy as np
 import copy
 
-from .agent import Agent, AgentState
-from .world import World
+from agent import Agent, AgentState
+from world import World
 
 
 def construct_agents(names, thresholds, independence, news, graph):
@@ -171,7 +171,7 @@ def get_expected_number_of_influenced_agents(world, start_agents, n_iterations):
     """
     expected = 0
     for iter in range(n_iterations):
-        sample_graph = nx.DiGraph() 
+        sample_graph = nx.Graph() 
         sample_graph.add_nodes_from(world.graph.nodes())
         for a in sample_graph.nodes():
             providers = world.agents[a].providers.copy()
