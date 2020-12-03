@@ -1,4 +1,4 @@
-from agent import AgentState
+from .agent import AgentState
 
 
 class World:
