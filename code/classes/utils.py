@@ -2,8 +2,8 @@ import networkx as nx
 import numpy as np
 import copy
 
-from classes.agent import Agent, AgentState
-from classes.world import World
+from .agent import Agent, AgentState
+from .world import World
 
 
 def construct_agents(names, thresholds, independence, news, graph):
