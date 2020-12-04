@@ -4,7 +4,7 @@ from enum import Enum
 
 class AgentState(Enum):
     """
-    Possible states fro an agent
+    Possible states for an agent
     """
     IGNORANT = 0
     INACTIVE = 1
