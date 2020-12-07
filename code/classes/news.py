@@ -9,6 +9,7 @@ class News:
         :param decay_parameter: float, measures how much the sensationality of the news decays with time.
         """
         self.name = name
+        self.init_sensation = sensation
         self.sensation = sensation
         self.decay_parameter = decay_parameter
         self.time_out = 0
@@ -20,6 +21,10 @@ class News:
         """
         self.sensation = self.sensation * np.exp(-self.decay_parameter)
         self.time_out = self.time_out + 1
+    
+    def reset(self):
+        self.sensation = self.init_sensation
+        self.time_out = 0
 
     def __str__(self):
         info_news_string = 'News: ' + str(self.name) + ', sensation: ' + str(self.sensation) + ', decay parameter: ' + str(self.decay_parameter)
