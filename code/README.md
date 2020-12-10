@@ -14,8 +14,10 @@ The remaining classes are either used to store the simulation data or for the vi
 In the `experiments` folder we added Jupyter notebooks which contain the experiments we conducded. 
 * `agent_phase_diagrams`: Contains phase diagrams for the cascade size depending on different model parameters
 * `animation_example`: Contains an example on how to create an animation.
-* `grap_structures`: Contains the experiments for **Q1** concerning the graph structure.
-* `multiple_news`: Contains the experiments for **Q2** concerning the behaviour of two different news in a network based on their inital agents the delay within which they are launched.
+* `grap_structure`: Contains the experiments for **Q1** concerning the graph structure.
+* `greedy_evaluation`: Contains experiments for **Q2** concerning the best choice of initial spreaders.
+* `multiple_news`: Contains experiments for **Q2** concerning the behaviour of two different news in a network with the focus on the inital spreaders.
+* `multiple_news_delay`: Contains experiments for **Q2** concerning the behaviour of the different news in a network with the focus on the the delay within which the news are launched.
 
 Before running the code you have to install the requirements. You can use the `requirements.txt` file which is included in this folder, using
 ```
