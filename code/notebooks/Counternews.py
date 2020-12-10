@@ -1,4 +1,8 @@
-
+""" 
+generates an animation for a 2 news
+takes very long to run!
+saves every frame in folder "animation"
+"""
 import matplotlib.pyplot as plt
 from matplotlib.patches import ArrowStyle
 import matplotlib.gridspec as gridspec
