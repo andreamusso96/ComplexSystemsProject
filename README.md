@@ -1,15 +1,11 @@
-# Complex Social Systems - Fake News
-(text between brackets to be removed)
+# Complex Social Systems - HS2020
 
-> * Group Name: (be creative!)
-> * Group participants names: (alphabetically sorted by last name)
-> * Project Title: (can be changed later)
+> * Group Name: FATTJ
+> * Group participants names: Falvio Dalessi, Andrea Musso, Thomas Rupf, Julian Schuhmacher, Tristan Strumann
+> * Project Title: The spreading of (fake) news in social networks
 
 ## General Introduction
-
-(States your motivation clearly: why is it important / interesting to solve this problem?)
-(Add real-world examples, if any)
-(Put the problem into a historical context, from what does it originate? Are there already some proposed solutions?)
+The spreading of false news on social media has become a major issue in recent years. The uncontrolled circulation of biased and false information is eroding fundamental pillars of liberal societies as fair elections, free speech and public debate, thereby leading to increasing division and polarisation. This issue has provoked wide interest in the scientific community, leading to many interdisciplinary research projects (see for instance [1], [2], [3]). However, "false news science" is still in its infancy and a solution to the false news problem is still far from sight. The aim of our project is to provide a small contribution to the understanding of this problem, via agent based models and simulations.
 
 ## The Model
 
@@ -18,9 +14,9 @@
 
 ## Fundamental Questions
 
-(At the end of the project you want to find the answer to these questions)
-(Formulate a few, clear questions. Articulate them in sub-questions, from the more general to the more specific. )
-
+With our model and code we aspire to answer specific cases of the following three broad research questions:
+> * **Q1:** How does network structure impact the spreading of a news?
+> * **Q2:** What impact does the choice of initial spreaders have on the spreading of competing news? What is the best choice of spreaders when one aims to maximise cascade size?
 
 ## Expected Results
 
@@ -29,10 +25,11 @@
 
 ## References 
 
-(Add the bibliographic references you intend to use)
-(Explain possible extension to the above models)
-(Code / Projects Reports of the previous year)
+[1]  Michela Del Vicario, Alessandro Bessi, Fabiana Zollo, Fabio Petroni, Antonio Scala,Guido Caldarelli, H Eugene Stanley, and Walter Quattrociocchi, The  spreading of misinformation online, Proceedings of the National Academy of Sciences, 113(2016), 3, 554–559, National Acad Sciences
 
+[2]  Soroush Vosoughi, Deb Roy, and Sinan Aral, The spread of true and false news online, Science, 359(2018), 6380, 1146–1151, American Association for the Advancement of Science
+
+[3]  David MJ Lazer, Matthew A Baum, Yochai Benkler, Adam J Berinsky, Kelly M Green-hill,  Filippo  Menczer,  Miriam  J  Metzger,  Brendan  Nyhan, Gordon  Pennycook, and David Rothschild, The science of fake news, Science,359(2018), 6380, 1094–1096, American Association for the Advancement of Science
 
 ## Research Methods
 
