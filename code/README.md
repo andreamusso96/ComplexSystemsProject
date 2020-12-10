@@ -11,13 +11,14 @@ The folder `model` contains the classes where the considered model is implemente
 The remaining classes are either used to store the simulation data or for the visualization of the network.
 
 ### `experiments`
-In the `experiments` folder we added Jupyter notebooks which contain the experiments we conducded. 
-* `agent_phase_diagrams`: Contains phase diagrams for the cascade size depending on different model parameters
-* `animation_example`: Contains an example on how to create an animation.
-* `grap_structure`: Contains the experiments for **Q1** concerning the graph structure.
-* `greedy_evaluation`: Contains experiments for **Q2** concerning the best choice of initial spreaders.
-* `multiple_news`: Contains experiments for **Q2** concerning the behaviour of two different news in a network with the focus on the inital spreaders.
-* `multiple_news_delay`: Contains experiments for **Q2** concerning the behaviour of the different news in a network with the focus on the the delay within which the news are launched.
+In the `experiments` folder we added Jupyter notebooks and Python files which contain the experiments we conducded. 
+* `agent_phase_diagrams.ipynb`: Contains phase diagrams for the cascade size depending on different model parameters
+* `animation_example.ipynb`: Contains an example on how to create an animation. Examples included [here](../other/).
+* `grap_structure.ipynb`: Contains the experiments for **Q1** concerning the graph structure.
+* `greedy_evaluation.ipynb`: Contains experiments for **Q2** concerning the best choice of initial spreaders.
+* `multiple_news_(random|out_degree).ipynb`: Contains experiments for **Q2** concerning the behaviour of two different news in a network with the focus on the inital spreaders where `random` and `out_degree` refer to the way the initial spreader are chosen.
+* `multiple_news_delay.ipynb`: Contains experiments for **Q2** concerning the behaviour of the different news in a network with the focus on the the delay within which the news are launched.
+* `counternews.py`: Creates animation for the experiment when to start counter news. Example included [here](../other/).
 
 Before running the code you have to install the requirements. You can use the `requirements.txt` file which is included in this folder, using
 ```
