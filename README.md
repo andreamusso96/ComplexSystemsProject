@@ -9,8 +9,7 @@ The spreading of false news on social media has become a major issue in recent y
 
 ## The Model
 
-The details of our model are described in the report. Here, we will only mention the fact that we are using a threshold model inspired the work of REF.
-This model is well recognized as one of the most accurate diffusion models on complex networks and we find it well suited for our task.
+The details of our model are described in the report. Here, we will only mention the fact that we are using a threshold model inspired the work of Watts (see reference [4] in report). This model is widely recognized as one of the most accurate diffusion models on complex networks and we find it well suited for our task.
 
 ## Fundamental Questions
 
