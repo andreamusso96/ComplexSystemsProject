@@ -1,127 +1,159 @@
-""" Agent class """
-import numpy as np
+import copy
+from enum import Enum
+
+
+class AgentState(Enum):
+    """
+    Possible states for an agent
+    """
+    IGNORANT = 0
+    INACTIVE = 1
+    ACTIVE = 2
 
 
 class Agent:
-    """
-    Represents an agent in the network
-
-    Attributes:
-        share_threshold: float between 0 and 1
-            how much excitement about a news an agent needs before he shares it.
-        truthfulness_opinion: float between -1 and 1
-            what agent thinks about the truthfulness of the news (−1: fake news, 1: true news)
-        is_active: bool
-            if the agent is active (has shared the news)
-        State: string
-            state of the agent: ignorant, inactivate or active    
-
-
-    Methods:
-        compute_truth_likelihood(provider, trust_in_providers)
-            computes the truth likelihood of the news
-        compute_excitement(news, truth_likelihood)
-            computes the excitement score of the news
-        is_sharing(news)
-            returns True if the agent will share the news
-    """
-
-    def __init__(self, name, share_threshold, truthfulness_opinion):
+    def __init__(self, name, states, threshold, independence, providers=None, receivers=None,
+                 weights_providers=None, weights_receivers=None):
         """
-        Represents an agent in the network
-
-        :param share_threshold: float in [0, 1]
-            how much excitement about a news an agent needs before he shares it.
-        :param truthfulness_opinion: float in [-1, 1]
-            what the agent think about the truthfulness of the news
+        :param name: integer, the name of the agent
+        :param states: dictionary, key = name of news, value = state in which the agent is wrt that news (AgentState).
+        :param threshold: float in [0,1], threshold for becoming active
+        :param independence: float in [0,1], the level of influence other agents have on the agent
+        :param providers: list of integers, list with the names of the information providers
+        :param receivers: list of integers, list with the names of the information recievers
+        :param weights_providers: dictionary, key = name of information provider, value = weight of information provider
+        :param weights_receivers: dictionary, key = name of information receiver, value = weight of information receiver
         """
-        assert 0 <= share_threshold <= 1, 'Invalid value for share_threshold. Value should be between 0 and 1'
-        assert -1 <= truthfulness_opinion <= 1, 'Invalid value for truthfulness_opinion. Value should be between -1 and 1'
-
         self.name = name
-        self.share_threshold = share_threshold
-        self.truthfulness_opinion = truthfulness_opinion
-        self.State = 'ignorant'
-        #just for reading info about state, not modifing state
-        self.is_active = False
-        
+        self.states = states
+        self.threshold = threshold
+        self.independence = independence
+        self.providers = providers
+        self.receivers = receivers
+        self.weights_providers = weights_providers
+        self.weights_receivers = weights_receivers
 
-    def compute_truth_likelihood(self, providers, trust_in_providers):
+    def updated_states(self, news, agents):
         """
-        Computes the truth likelihood of the news based on the trust in the information providers
+        Checks if and how the state of the agent should be updated
 
-        :param providers: list (list of Agents)
-            represents the information providers
-        :param trust_in_providers: dictionary (normalized) key = name of provider, value = trust in provider (float in [0,1])
-            represents the trust in the information providers
-        :return: float
-            Truth likelihood of the news
+        :param news: dictionary, key = name of news, value = news object
+        :param agents: dictionary, key = name of the agent, value = agent object
+        :return: updated_states, dictionary, key = name of the news, value = state in which the agent is wrt that news.
         """
-        assert (1 - np.sum(list(trust_in_providers.values()))>=0), 'Invalid value for trust_in_providers. Array ' \
-                                                                         'should be normalized '
 
-        truth_likelihood = (np.random.rand() - 0.5) / 100  # some noise
-        for provider in providers:
-            # For each active provider we add the trust in that provider to the truth likelihood
-            if provider.is_active:
-                truth_likelihood = truth_likelihood + trust_in_providers[provider.name]
+        # Initialise variables
+        updated_states = copy.deepcopy(self.states)
+        excitement_scores = dict([(n.name, 0) for n in news.values()])
 
-        return truth_likelihood
+        # Compute the excitement score
+        for provider in self.providers:
+            if agents[provider].is_active():
+                # Find the news wrt which the provider is active
+                name_news_active = agents[provider].name_news_active()
 
-    def compute_excitement(self, news, truth_likelihood):
+                # add the weight of the provider to the excitement score of the news wrt which the provider is active
+                excitement_scores[name_news_active] = excitement_scores[name_news_active] + (1 - self.independence) * \
+                                                      self.weights_providers[provider]
+
+                # Updates the state to INACTIVE if the state was IGNORANT before
+                if updated_states[name_news_active] == AgentState.IGNORANT:
+                    updated_states[name_news_active] = AgentState.INACTIVE
+
+        # Compute if excitement score is above threshold and adjust the state accordingly
+        for n in news.values():
+            # Check if excitement_score is bigger than threshold
+            if excitement_scores[n.name] >= self.threshold * (1 - n.sensation):
+                # Check if the agent is already active with respect to some other news
+                incumbent = False
+                for nw in news.values():
+                    if nw != n and self.states[nw.name] == AgentState.ACTIVE:
+                        incumbent = True
+
+                        # If the excitement score of the other news (news nw) is below the one of the current news
+                        # under consideration (news n) the agent becomes active with respect to the news n.
+                        # If not he remains active wrt news nw
+                        if excitement_scores[n.name] > excitement_scores[nw.name]:
+                            updated_states[n.name] = AgentState.ACTIVE
+                            updated_states[nw.name] = AgentState.INACTIVE
+
+                # If the agent was not active with respect to any other news (i.e. no incumbents),
+                # we update his state to active
+                if not incumbent:
+                    updated_states[n.name] = AgentState.ACTIVE
+
+            # If the excitement score of an agent is below the threshold he becomes inactive
+            """elif excitement_scores[n.name] < self.threshold * (1 - n.sensation) and \
+                    self.states[n.name] == AgentState.ACTIVE:
+                updated_states[n.name] = AgentState.INACTIVE"""
+
+        return updated_states
+
+    def is_active(self):
         """
-        Computes the excitement score of the news based on its truth likelihood and fitness
+        Checks if agent is active with respect to some news
 
-        :param news: News
-            News that is shared in the network
-        :param truth_likelihood: float in [0, 1]
-            how much the agent believes in the news.
-        :return: float
-            Excitement score of the news
+        :return: bool, True if agent is active, False if not
         """
-        indipendent_thought = 1 - truth_likelihood
-        excitement_score = (truth_likelihood + self.truthfulness_opinion * indipendent_thought + news.fitness) * np.exp(
-            -0.01 * news.time)/2 # here we set c = 0.01
-        return excitement_score
+        # Iterate through the states (i.e. the names of the news)
+        for s in self.states.values():
+            if s == AgentState.ACTIVE:
+                return True
 
-    def activates(self, news, providers, trust_in_providers):
-        """
-        Computes if the agent should activate or not.
-
-        :param news: News
-            News that is shared in the network
-        :param providers: list (list of Agents)
-            represents the information provider
-        :param trust_in_providers: dictionary (normalized) key = name of provider, value = trust in provider (float in [0,1])
-            represents the trust in the information providers
-        :return: boolean
-            True if agent activates in this round and false otherwise (is already active or does not activate)
-        """
-        assert len(providers) == len(trust_in_providers), 'provider and trust_in_providers must have the same length'
-
-        if self.is_active:
-            return False
-        # if this function was called it's because the news reached the agent
-        self.State = 'inactive'
-        
-        # check if agent should activate
-        truth_likelihood = self.compute_truth_likelihood(providers, trust_in_providers)
-        excitement_score = self.compute_excitement(news, truth_likelihood)
-
-        if excitement_score >= self.share_threshold:
-            return True
         return False
 
-    def activate(self):
+    def is_ignorant(self):
         """
-        Activates the agent if it can be activated
+        Checks if agent is ignorant with respect to all news
         """
-        self.State = 'active'
-        self.is_active = True
+        for s in self.states.values():
+            if s != AgentState.IGNORANT:
+                return False
+
+        return True
+
+    def is_inactive(self):
+        """
+        Checks if agent is inactive with respect to some news
+
+        Agent is inactive if it is not active and not ignorant
+        """
+        return not self.is_active() and not self.is_ignorant()
+
+    def name_news_active(self):
+        """
+        Checks with respect to which news an agent is active
+
+        :return: integer, name of the news wrt which the agent is active
+        """
+        if self.is_active():
+            # Iterate through the states (i.e. the names of the news)
+            for news_name in self.states:
+                if self.states[news_name] == AgentState.ACTIVE:
+                    return news_name
+
+        print('Error: provider is inactive')
 
     def __str__(self):
-        return f'Agent: \n' \
-               f'\tshare threshold: {self.share_threshold}\n' \
-               f'\ttruthfulness opinion {self.truthfulness_opinion}\n' \
-               f'\tactive: {self.is_active}\n' \
-               f'\tstate: {self.state}'
+        info_agent_string = 'Agent: ' + str(self.name) \
+                            + '\n' + 'states: ' + str(self.states) \
+                            + '\n' + 'threshold: ' + str(self.threshold) \
+                            + '\n' + 'independence: ' + str(self.independence) \
+                            + '\n' + 'providers: ' + str(self.providers) \
+                            + '\n' + 'receivers: ' + str(self.receivers) \
+                            + '\n' + 'weights_providers: ' + str(self.weights_providers) \
+                            + '\n' + 'weights_receivers: ' + str(self.weights_receivers)
+
+        return info_agent_string
+
+    def __repr__(self):
+        info_agent_string = 'Agent: ' + str(self.name) \
+                            + '\n' + 'states: ' + str(self.states) \
+                            + '\n' + 'threshold: ' + str(self.threshold) \
+                            + '\n' + 'independence: ' + str(self.independence) \
+                            + '\n' + 'providers: ' + str(self.providers) \
+                            + '\n' + 'receivers: ' + str(self.receivers) \
+                            + '\n' + 'weights_providers: ' + str(self.weights_providers) \
+                            + '\n' + 'weights_receivers: ' + str(self.weights_receivers)
+
+        return info_agent_string
