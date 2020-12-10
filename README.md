@@ -15,8 +15,8 @@ The spreading of false news on social media has become a major issue in recent y
 ## Fundamental Questions
 
 With our model and code we aspire to answer specific cases of the following three broad research questions:
-> * **Q1:** How does network structure impact the spreading of a news?
-> * **Q2:** What impact does the choice of initial spreaders have on the spreading of competing news? What is the best choice of spreaders when one aims to maximise cascade size?
+* **Q1:** How does network structure impact the spreading of a news?
+* **Q2:** What impact does the choice of initial spreaders have on the spreading of competing news? What is the best choice of spreaders when one aims to maximise cascade size?
 
 ## Expected Results
 
