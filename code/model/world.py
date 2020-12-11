@@ -1,5 +1,5 @@
 
-from classes.agent import AgentState
+from .agent import AgentState
 
 
 class World:

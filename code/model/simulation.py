@@ -1,7 +1,7 @@
 import copy
 
-from classes.agent import AgentState
-from classes.utils import construct_world_constant_parameters
+from .agent import AgentState
+from .utils import construct_world_constant_parameters
 
 
 class Simulation:

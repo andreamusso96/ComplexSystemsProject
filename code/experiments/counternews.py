@@ -12,14 +12,14 @@ from copy import deepcopy
 
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.abspath('')))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from classes.agent import Agent
-from classes.world import World
-from classes.color_maps import ColorMaps
-from classes.utils import *
-from classes.news import News
-from classes.agent import AgentState
+from model.agent import Agent
+from model.world import World
+from model.color_maps import ColorMaps
+from model.utils import *
+from model.news import News
+from model.agent import AgentState
 
 def find_degreecentral_nodes(world, k, blacklist, news):
     degree_centrality = []
