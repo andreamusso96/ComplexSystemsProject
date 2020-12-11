@@ -1,7 +1,7 @@
 # Complex Social Systems - HS2020
 
 > * Group Name: FATTJ
-> * Group participants names: Falvio Dalessi, Andrea Musso, Thomas Rupf, Julian Schuhmacher, Tristan Strumann
+> * Group participants names: Flavio Dalessi, Andrea Musso, Thomas Rupf, Julian Schuhmacher, Tristan Strumann
 > * Project Title: The spreading of (fake) news in social networks
 
 ## General Introduction
